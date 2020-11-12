@@ -32,6 +32,9 @@ def get_host_type(host):
     else:
         return 'ip'
 
+def get_all_hosts_types():
+    return ['ip', 'onion']
+
 def get_all_keys_types():
     return redis_ssh.smembers('all:key:type')
 
@@ -66,10 +69,13 @@ def get_banner_by_host(host, host_type=None):
 #### ####
 
 #### HASSH ####
-def get_host_by_hassh(hassh, host_type=None):
-    if not host_type:
-        host_type = get_host_type(host)
-    return redis_ssh.smembers('hassh:{}:{}'.format(host_type, hassh))
+def get_hosts_by_hassh(hassh, hosts_types=['ip']):
+    if not hosts_types:
+        hosts_types = get_all_hosts_types(host)
+    l_redis_keys = []
+    for host_type in hosts_types:
+        l_redis_keys.append('hassh:{}:{}'.format(host_type, hassh))
+    return redis_ssh.sunion(l_redis_keys[0], *l_redis_keys[1:])
 
 def get_hassh_by_host(host, host_type=None):
     return redis_ssh.smembers('{}:hassh:kex:{}'.format(host_type, host))
@@ -89,7 +95,14 @@ def get_host_fingerprint(host, host_type=None):
         host_type = get_host_type(host)
     return redis_ssh.smembers('{}:{}'.format(host_type, host))
 
-def get_host_by_fingerprint(key_type, fingerprint, host_type='ip'):
+def get_hosts_by_fingerprint(fingerprint, host_types=['ip']):
+    l_redis_keys = []
+    for host_type in host_types:
+        for key_type in get_all_keys_types():
+            l_redis_keys.append('fingerprint:{}:{}:{}'.format(host_type, key_type, fingerprint))
+    return redis_ssh.sunion(l_redis_keys[0], *l_redis_keys[1:])
+
+def get_hosts_by_key_type_and_fingerprint(key_type, fingerprint, host_type='ip'):
     return redis_ssh.smembers('fingerprint:{}:{}:{}'.format(host_type, key_type, fingerprint))
 
 def get_host_history(host, host_type=None, date_from=None, date_to=None, get_key=False):
@@ -153,8 +166,8 @@ def deanonymize_onion():
     for row_fingerprint in fing_inter:
         key_type, fingerprint = row_fingerprint.split(';')
         fing_match = {}
-        fing_match['onion'] = get_host_by_fingerprint(key_type, fingerprint, host_type='onion')
-        fing_match['ip'] = get_host_by_fingerprint(key_type, fingerprint, host_type='ip')
+        fing_match['onion'] = get_hosts_by_fingerprint(key_type, fingerprint, host_type='onion')
+        fing_match['ip'] = get_hosts_by_fingerprint(key_type, fingerprint, host_type='ip')
         deanonymized_onion.append(fing_match)
     return deanonymized_onion
 
