@@ -67,9 +67,9 @@ class Get_all_host_by_fingerprint(tornado.web.RequestHandler):
             self.set_status(400)
             self.finish({"Error": "Invalid Fingerprint"})
         else:
-            print(q)
-            response = list(passive_ssh.get_hosts_by_fingerprint(q))
-            self.write({"fingerprint": q, "hosts": response})
+            response = passive_ssh.get_key_metadata(q)
+            response['fingerprint'] = q
+            self.write(response)
 
 class Get_all_host_by_key_type_and_fingerprint(tornado.web.RequestHandler):
     def get(self, q1, q2):
@@ -79,7 +79,10 @@ class Get_all_host_by_key_type_and_fingerprint(tornado.web.RequestHandler):
             self.finish({"Error": "Invalid Fingerprint"})
         else:
             response = list(passive_ssh.get_hosts_by_key_type_and_fingerprint(q1, q2))
-            self.write({"key_type": q1, "fingerprint": q2, "hosts": response})
+            dict_resp = passive_ssh.get_key_metadata_by_key_type(q1, q2)
+            dict_resp['type'] = q1
+            dict_resp['hosts'] = response
+            self.write(dict_resp)
 
 class Get_hosts_by_hassh(tornado.web.RequestHandler):
     def get(self, q):
@@ -88,7 +91,8 @@ class Get_hosts_by_hassh(tornado.web.RequestHandler):
             self.finish({"Error": "Invalid Hassh"})
         else:
             response = list(passive_ssh.get_hosts_by_hassh(q))
-            self.write({"hassh": q, "hosts": response})
+            kex = passive_ssh.get_hassh_kex(q, r_format='dict')
+            self.write({"hassh": q, "hosts": response, "kexs": kex})
 
 
 #### TORNADO ####
@@ -97,7 +101,7 @@ application = tornado.web.Application([
     (r"/banners",Get_all_banner),  # show nb ?
     (r"/keys/types",get_all_keys_types), # show nb ?
     (r"/host/ssh/(.*)", Get_host),
-    (r"host/history/(.*)",Get_host_history), # remove host from url path ?
+    (r"/host/history/(.*)",Get_host_history), # remove host from url path ?
 
     (r"/fingerprint/all/(.*)", Get_all_host_by_fingerprint),
     (r"/fingerprint/type/([a-zA-Z0-9-]*)/(.*)", Get_all_host_by_key_type_and_fingerprint),

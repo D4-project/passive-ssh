@@ -2,6 +2,7 @@
 # -*-coding:UTF-8 -*
 
 import redis
+import json
 
 redis_host = 'localhost'
 redis_port = 7301
@@ -77,20 +78,31 @@ def get_hosts_by_hassh(hassh, hosts_types=['ip']):
         l_redis_keys.append('hassh:{}:{}'.format(host_type, hassh))
     return redis_ssh.sunion(l_redis_keys[0], *l_redis_keys[1:])
 
-def get_hassh_by_host(host, host_type=None):
-    return redis_ssh.smembers('{}:hassh:kex:{}'.format(host_type, host))
+def get_hasshs_by_host(host, hosts_types=['ip']):
+    if not hosts_types:
+        hosts_types = get_all_hosts_types(host)
+    l_redis_keys = []
+    for host_type in hosts_types:
+        l_redis_keys.append('{}:hassh:kex:{}'.format(host_type, host))
+    return redis_ssh.sunion(l_redis_keys[0], *l_redis_keys[1:])
 
-def get_hassh_kex(hassh):
-    return list(redis_ssh.smembers('hassh:kex:{}'.format(hassh)))
+def get_hassh_kex(hassh, r_format='str'):
+    if r_format == 'str':
+        return list(redis_ssh.smembers('hassh:kex:{}'.format(hassh)))
+    else:
+        l_kex = []
+        for key in redis_ssh.smembers('hassh:kex:{}'.format(hassh)):
+            l_kex.append(json.loads(key))
+        return l_kex
 
 def get_host_kex(host, host_type=None, hassh=None, hassh_host=None): ## TODO: # OPTIMIZE:
     host_kex = {}
-    for hassh in get_hassh_by_host(host, host_type=host_type):
+    for hassh in get_hasshs_by_host(host, hosts_types=[host_type]):
         host_kex[hassh] = get_hassh_kex(hassh)
     return host_kex
 #### ####
 
-def get_host_fingerprint(host, host_type=None):
+def get_host_fingerprints(host, host_type=None):
     if not host_type:
         host_type = get_host_type(host)
     return redis_ssh.smembers('{}:{}'.format(host_type, host))
@@ -142,15 +154,40 @@ def get_host_metadata(host, host_type=None, banner=False, hassh=False, kex=False
             host_metadata['hassh'] = get_host_kex(host, host_type=host_type)
         else:
             host_metadata['hassh'] = get_host_kex(host, host_type=host_type)
-            host_metadata['kex'] = json.load(get_hassh_by_host(host, host_type=host_type))
-    if pkey:
-        host_metadata['pkey'] = list(get_host_fingerprint(host, host_type=host_type))
+            host_metadata['kex'] = json.load(get_hasshs_by_host(host, host_type=host_type))
+    host_metadata['keys'] = []
+    for ssh_key in get_host_fingerprints(host, host_type=host_type):
+        key_type, fingerprint = ssh_key.split(';', 1)
+        host_metadata['keys'].append({'type': key_type, 'fingerprint': fingerprint})
     return host_metadata
 
-def get_key_metadata(key_type, fingerprint):
+
+def exist_ssh_key(key_type, fingerprint):
+    return redis_ssh.exists('key_metadata:{}:{}'.format(key_type, fingerprint))
+
+def get_key_metadata_first_seen(key_type, fingerprint):
+    return redis_ssh.hget('key_metadata:{}:{}'.format(key_type, fingerprint), 'first_seen')
+
+def get_key_metadata_last_seen(key_type, fingerprint):
+    return redis_ssh.hget('key_metadata:{}:{}'.format(key_type, fingerprint), 'last_seen')
+
+def get_key_metadata(fingerprint, keys_types=[]):
+    if not keys_types:
+        keys_types = get_all_keys_types()
+    for key_type in keys_types:
+        if exist_ssh_key(key_type, fingerprint):
+            key_metadata = {}
+            key_metadata['type'] = key_type
+            key_metadata['first_seen'] = get_key_metadata_first_seen(key_type, fingerprint)
+            key_metadata['last_seen'] = get_key_metadata_last_seen(key_type, fingerprint)
+            key_metadata['base64'] = get_key_base64(key_type, fingerprint)
+            return key_metadata
+    return {}
+
+def get_key_metadata_by_key_type(key_type, fingerprint):
     key_metadata = {}
-    key_metadata['first_seen'] = redis_ssh.hget('onion_metadata:{}', 'first_seen')
-    key_metadata['last_seen'] = redis_ssh.hget('onion_metadata:{}', 'last_seen')
+    key_metadata['first_seen'] = redis_ssh.hget('key_metadata:{}:{}'.format(key_type, fingerprint), 'first_seen')
+    key_metadata['last_seen'] = redis_ssh.hget('key_metadata:{}:{}'.format(key_type, fingerprint), 'last_seen')
     key_metadata['base64'] = get_key_base64(key_type, fingerprint)
     return key_metadata
 
