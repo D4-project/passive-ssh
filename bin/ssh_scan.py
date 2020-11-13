@@ -6,7 +6,6 @@ import re
 import sys
 import json
 import time
-import redis
 import socks
 import socket
 import logging
@@ -14,6 +13,7 @@ import argparse
 import binascii
 import datetime
 import paramiko
+import netaddr
 
 from hashlib import md5
 
@@ -221,15 +221,20 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='SSH Scanner')
     parser.add_argument('-p', '--port',help='SSH port' , type=int, default=22, dest='ssh_port')
     parser.add_argument('--proxy', help='SSH port', action="store_true")
+    parser.add_argument('-v', '--verbose', help='Verbose output', action="store_true", default=False)
     parser.add_argument('-i', '--proxy_ip',help='proxy ip' , type=str, default='127.0.0.1', dest='proxy_ip')
     parser.add_argument('-pp', '--proxy_port',help='proxy port' , type=int, default=9050, dest='proxy_port')
+    parser.add_argument('-r', '--trange', help='target network range express in CIDR block', type=str, dest='trange', required=False, default=None)
 
     # Required argument
     requiredNamed = parser.add_argument_group('required arguments')
-    requiredNamed.add_argument('-t', '--target',help='target domain or ip' , type=str, dest='target', required=True)
+    requiredNamed.add_argument('-t', '--target',help='target domain or ip' , type=str, dest='target', required=False, default=None)
     args = parser.parse_args()
 
-    if not args.target:
+    if args.trange:
+        trange = netaddr.IPNetwork(args.trange)
+
+    if args.target is None and args.trange is None:
         parser.print_help()
         sys.exit(0)
 
@@ -242,10 +247,20 @@ if __name__ == '__main__':
     proxy_ip = args.proxy_ip
     proxy_port = args.proxy_port
 
-    print(target)
-    res = ssh_scanner(target, ssh_port, use_proxy=use_proxy, proxy_ip=proxy_ip, proxy_port=proxy_port)
-    print(json.dumps(res))
-    #print(time.time()-ds)
-    if res:
-        passive_ingester.save_ssh_scan(res)
+    if args.verbose:
+        print(target)
+    if args.target:
+        res = ssh_scanner(target, ssh_port, use_proxy=use_proxy, proxy_ip=proxy_ip, proxy_port=proxy_port)
+        print(json.dumps(res))
+        if res:
+            passive_ingester.save_ssh_scan(res)
+    else:
+        for v in trange:
+            res = ssh_scanner(str(v), ssh_port, use_proxy=use_proxy, proxy_ip=proxy_ip, proxy_port=proxy_port)
+            print(json.dumps(res))
+            if res:
+                passive_ingester.save_ssh_scan(res)
+
     print(time.time()-ds)
+
+
