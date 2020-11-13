@@ -36,63 +36,63 @@ def is_valid_hassh(hassh):
 class Get_all_banner(tornado.web.RequestHandler):
     def get(self):
         response = {"banners": list(passive_ssh.get_all_banner())}
-        self.write(response)
+        self.write(json.dumps(response))
 
 class get_all_keys_types(tornado.web.RequestHandler):
     def get(self):
         response = {"keys_types": list(passive_ssh.get_all_keys_types())}
-        self.write(response)
+        self.write(json.dumps(response))
 
 class Get_host(tornado.web.RequestHandler):
     def get(self, q):
         if not is_valid_ip_address(q):
             self.set_status(400)
-            self.finish({"Error": "Invalid IP Address"})
+            self.finish(json.dumps({"Error": "Invalid IP Address"}))
         else:
             response = passive_ssh.get_host_metadata(q, 'ip', banner=True, hassh=True, kex=True, pkey=True)
-            self.write(response)
+            self.write(json.dumps(response))
 
 class Get_host_history(tornado.web.RequestHandler):
     def get(self, q):
         if not is_valid_ip_address(q):
             self.set_status(400)
-            self.finish({"Error": "Invalid IP Address"})
+            self.finish(json.dumps({"Error": "Invalid IP Address"}))
         else:
             response = passive_ssh.get_host_history(q, host_type='ip', get_key=True)
-            self.write({"hosts": q, "history": response})
+            self.write(json.dumps({"hosts": q, "history": response}))
 
 class Get_all_host_by_fingerprint(tornado.web.RequestHandler):
     def get(self, q):
         if not is_valid_fingerprint(q):
             self.set_status(400)
-            self.finish({"Error": "Invalid Fingerprint"})
+            self.finish(json.dumps({"Error": "Invalid Fingerprint"}))
         else:
             response = passive_ssh.get_key_metadata(q)
             response['fingerprint'] = q
-            self.write(response)
+            self.write(json.dumps(response))
 
 class Get_all_host_by_key_type_and_fingerprint(tornado.web.RequestHandler):
     def get(self, q1, q2):
         # # TODO: sanityse key_type
         if not is_valid_fingerprint(q2):
             self.set_status(400)
-            self.finish({"Error": "Invalid Fingerprint"})
+            self.finish(json.dumps({"Error": "Invalid Fingerprint"}))
         else:
             response = list(passive_ssh.get_hosts_by_key_type_and_fingerprint(q1, q2))
             dict_resp = passive_ssh.get_key_metadata_by_key_type(q1, q2)
             dict_resp['type'] = q1
             dict_resp['hosts'] = response
-            self.write(dict_resp)
+            self.write(json.dumps(dict_resp))
 
 class Get_hosts_by_hassh(tornado.web.RequestHandler):
     def get(self, q):
         if not is_valid_hassh(q):
             self.set_status(400)
-            self.finish({"Error": "Invalid Hassh"})
+            self.finish(json.dumps({"Error": "Invalid Hassh"}))
         else:
             response = list(passive_ssh.get_hosts_by_hassh(q))
             kex = passive_ssh.get_hassh_kex(q, r_format='dict')
-            self.write({"hassh": q, "hosts": response, "kexs": kex})
+            self.write(json.dumps({"hassh": q, "hosts": response, "kexs": kex}))
 
 
 #### TORNADO ####
