@@ -12,12 +12,15 @@ import tornado.escape
 import tornado.ioloop
 import tornado.web
 
-def is_valid_ip_address(ip_address):
+def is_valid_host(host):
     try:
-        res = ipaddress.ip_address(ip_address)
+        res = ipaddress.ip_address(host)
         return True
     except:
-        return False
+        pass
+    # # TODO: check domain validity host + onion    
+    return True
+    #return False
 
 # # TODO: check len
 def is_valid_fingerprint(fingerprint):
@@ -33,9 +36,16 @@ def is_valid_hassh(hassh):
     else:
         return False
 
+        Get_all_stats
+
+class Get_all_stats(tornado.web.RequestHandler):
+    def get(self):
+        response = passive_ssh.get_all_stats()
+        self.write(json.dumps(response))
+
 class Get_all_banner(tornado.web.RequestHandler):
     def get(self):
-        response = {"banners": list(passive_ssh.get_all_banner())}
+        response = {"banners": passive_ssh.get_stats_nb_banner(reverse=True)}
         self.write(json.dumps(response))
 
 class get_all_keys_types(tornado.web.RequestHandler):
@@ -45,7 +55,7 @@ class get_all_keys_types(tornado.web.RequestHandler):
 
 class Get_host(tornado.web.RequestHandler):
     def get(self, q):
-        if not is_valid_ip_address(q):
+        if not is_valid_host(q):
             self.set_status(400)
             self.finish(json.dumps({"Error": "Invalid IP Address"}))
         else:
@@ -54,7 +64,7 @@ class Get_host(tornado.web.RequestHandler):
 
 class Get_host_history(tornado.web.RequestHandler):
     def get(self, q):
-        if not is_valid_ip_address(q):
+        if not is_valid_host(q):
             self.set_status(400)
             self.finish(json.dumps({"Error": "Invalid IP Address"}))
         else:
@@ -98,6 +108,7 @@ class Get_hosts_by_hassh(tornado.web.RequestHandler):
 #### TORNADO ####
 
 application = tornado.web.Application([
+    (r"/stats", Get_all_stats),
     (r"/banners",Get_all_banner),  # show nb ?
     (r"/keys/types",get_all_keys_types), # show nb ?
     (r"/host/ssh/(.*)", Get_host),

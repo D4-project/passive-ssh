@@ -60,7 +60,7 @@ def get_banner_host(banner, host_type=None):
 def get_banner_host_nb(banner, host_type=None):
     if not host_type:
         host_type = get_host_type(host)
-    return redis_ssh.scard('banner:{}:{}'.format(host_type, banner))
+    return int(redis_ssh.scard('banner:{}:{}'.format(host_type, banner)))
 
 def get_banner_by_host(host, host_type=None):
     if not host_type:
@@ -208,16 +208,29 @@ def deanonymize_onion():
         deanonymized_onion.append(fing_match)
     return deanonymized_onion
 
-def get_stats_nb_banner(sorted=True, host_type='ip', reverse=False):
+def get_stats_nb_banner(sort=True, hosts_types=[], reverse=False):
     nb_banner = {}
+    hosts_types = get_all_hosts_types()
     for banner in get_all_banner():
-        nb_banner[banner] = get_banner_host_nb(banner, host_type=host_type)
-    if sorted:
-        return [(k, nb_banner[k]) for k in sorted(nb_banner, key=nb_banner.get, reverse=reverse)]
+        for host_type in hosts_types:
+            nb_banner[banner] = nb_banner.get(banner, 0) + get_banner_host_nb(banner, host_type=host_type)
+    if sort:
+        return {k: nb_banner[k] for k in sorted(nb_banner, key=nb_banner.get, reverse=reverse)}
     else:
         return nb_banner
-#### ####
 
+def get_all_stats():
+    dict_stat = {}
+    dict_stat['banners'] = redis_ssh.scard('all:banner')
+    dict_stat['hosts'] = {}
+    for host_type in get_all_hosts_types():
+        dict_stat['hosts'][host_type] = redis_ssh.scard('all:{}'.format(host_type))
+    dict_stat['keys'] = {}
+    for key_type in get_all_keys_types():
+        dict_stat['keys'][key_type] = redis_ssh.scard('all:key:fingerprint:{}'.format(key_type))
+    return dict_stat
+
+#### ####
 
 if __name__ == '__main__':
     deanonymize_onion()
