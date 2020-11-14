@@ -18,7 +18,7 @@ def is_valid_host(host):
         return True
     except:
         pass
-    # # TODO: check domain validity host + onion    
+    # # TODO: check domain validity host + onion
     return True
     #return False
 
@@ -77,9 +77,11 @@ class Get_all_host_by_fingerprint(tornado.web.RequestHandler):
             self.set_status(400)
             self.finish(json.dumps({"Error": "Invalid Fingerprint"}))
         else:
-            response = passive_ssh.get_key_metadata(q)
-            response['fingerprint'] = q
-            self.write(json.dumps(response))
+            response = list(passive_ssh.get_hosts_by_fingerprint(q))
+            dict_resp = passive_ssh.get_key_metadata(q)
+            dict_resp['fingerprint'] = q
+            dict_resp['hosts'] = response
+            self.write(json.dumps(dict_resp))
 
 class Get_all_host_by_key_type_and_fingerprint(tornado.web.RequestHandler):
     def get(self, q1, q2):
