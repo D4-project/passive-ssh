@@ -256,7 +256,10 @@ if __name__ == '__main__':
             passive_ingester.save_ssh_scan(res)
     else:
         for v in trange:
-            res = ssh_scanner(str(v), ssh_port, use_proxy=use_proxy, proxy_ip=proxy_ip, proxy_port=proxy_port)
+            try:
+                res = ssh_scanner(str(v), ssh_port, use_proxy=use_proxy, proxy_ip=proxy_ip, proxy_port=proxy_port)
+            except:
+                continue
             print(json.dumps(res))
             if res:
                 passive_ingester.save_ssh_scan(res)
