@@ -2,3 +2,4 @@ redis
 tornado
 git+https://github.com/D4-project/paramiko.git
 pysocks
+netaddr
