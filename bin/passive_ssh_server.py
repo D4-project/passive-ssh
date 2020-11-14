@@ -57,19 +57,25 @@ class Get_host(tornado.web.RequestHandler):
     def get(self, q):
         if not is_valid_host(q):
             self.set_status(400)
-            self.finish(json.dumps({"Error": "Invalid IP Address"}))
+            self.finish(json.dumps({"Error": "Invalid Host"}))
         else:
-            response = passive_ssh.get_host_metadata(q, 'ip', banner=True, hassh=True, kex=True, pkey=True)
+            response = passive_ssh.get_host_metadata(q, banner=True, hassh=True, kex=True, pkey=True)
             self.write(json.dumps(response))
 
 class Get_host_history(tornado.web.RequestHandler):
     def get(self, q):
         if not is_valid_host(q):
             self.set_status(400)
-            self.finish(json.dumps({"Error": "Invalid IP Address"}))
+            self.finish(json.dumps({"Error": "Invalid Host"}))
         else:
-            response = passive_ssh.get_host_history(q, host_type='ip', get_key=True)
+            response = passive_ssh.get_host_history(q, get_key=True)
             self.write(json.dumps({"hosts": q, "history": response}))
+
+class Get_fingerprints_stats(tornado.web.RequestHandler):
+    def get(self):
+        response = passive_ssh.get_all_fingerprints(withscores=True)
+        self.write(response)
+        #self.write(json.dumps(response))
 
 class Get_all_host_by_fingerprint(tornado.web.RequestHandler):
     def get(self, q):
@@ -111,11 +117,16 @@ class Get_hosts_by_hassh(tornado.web.RequestHandler):
 
 application = tornado.web.Application([
     (r"/stats", Get_all_stats),
-    (r"/banners",Get_all_banner),  # show nb ?
+
+    (r"/banners",Get_all_banner),
+    ## TODO: get host by banners
+
     (r"/keys/types",get_all_keys_types), # show nb ?
     (r"/host/ssh/(.*)", Get_host),
     (r"/host/history/(.*)",Get_host_history), # remove host from url path ?
 
+    (r"/fingerprints/stats", Get_fingerprints_stats),
+    # # TODO: stats by key type ?
     (r"/fingerprint/all/(.*)", Get_all_host_by_fingerprint),
     (r"/fingerprint/type/([a-zA-Z0-9-]*)/(.*)", Get_all_host_by_key_type_and_fingerprint),
 

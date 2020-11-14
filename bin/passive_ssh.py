@@ -39,8 +39,11 @@ def get_all_hosts_types():
 def get_all_keys_types():
     return redis_ssh.smembers('all:key:type')
 
-def get_all_key_fingerprint_by_type(key_type):
-    return redis_ssh.smembers('all:key:fingerprint:{}'.format(key_type))
+def get_all_hosts():
+    l_redis_keys = []
+    for host_type in get_all_hosts_types():
+        l_redis_keys.append('all:{}'.format(host_type))
+    return redis_ssh.sunion(l_redis_keys[0], *l_redis_keys[1:])
 
 def get_all_onion():
     return redis_ssh.smembers('all:onion')
@@ -102,20 +105,32 @@ def get_host_kex(host, host_type=None, hassh=None, hassh_host=None): ## TODO: # 
     return host_kex
 #### ####
 
+#### FINGERPRINT ####
+def get_all_fingerprints(withscores=False):
+    if withscores:
+        res = redis_ssh.zrevrange('all:key:fingerprint', 0, -1, withscores=True, score_cast_func=int)
+        return dict(res)
+    else:
+        return redis_ssh.zrange('all:key:fingerprint', 0, -1)
+
+def get_all_key_fingerprint_by_type(key_type):
+    return redis_ssh.smembers('all:key:fingerprint:{}'.format(key_type))
+
 def get_host_fingerprints(host, host_type=None):
     if not host_type:
         host_type = get_host_type(host)
     return redis_ssh.smembers('{}:{}'.format(host_type, host))
 
-def get_hosts_by_fingerprint(fingerprint, host_types=['ip']):
+def get_hosts_by_fingerprint(fingerprint, host_types=['ip', 'onion']):
     l_redis_keys = []
     for host_type in host_types:
         for key_type in get_all_keys_types():
-            l_redis_keys.append('fingerprint:{}:{}:{}'.format(host_type, key_type, fingerprint))
+            l_redis_keys.append('{}:fingerprint:{}:{}'.format(host_type, key_type, fingerprint))
     return redis_ssh.sunion(l_redis_keys[0], *l_redis_keys[1:])
 
-def get_hosts_by_key_type_and_fingerprint(key_type, fingerprint, host_type='ip'):
-    return redis_ssh.smembers('fingerprint:{}:{}:{}'.format(host_type, key_type, fingerprint))
+def get_hosts_by_key_type_and_fingerprint(key_type, fingerprint, host_types=['ip']):
+    return redis_ssh.smembers('{}:fingerprint:{}:{}'.format(host_type, key_type, fingerprint))
+#### ####
 
 def get_host_history(host, host_type=None, date_from=None, date_to=None, get_key=False):
     # # TODO:
