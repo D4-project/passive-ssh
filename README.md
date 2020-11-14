@@ -1,14 +1,16 @@
-# analyzer-d4-passivessh
+# Passive SSH
 
-The Passive SSH server provide a fast-lookup database with the history of all SSH keys seen per host (IPv4/IPv6/onion). The goal of the passive SSH server is to trace and track SSH network activities
+Passive SSH is an open source framework composed of a scanner and server to store and lookup the SSH keys and fingerprints per host (IPv4/IPv6/onion).
 
-# Overview
+The key materials along fingerprints and hosts are stored in a fast-lookup database. The system provides an historical view of SSH keys seen but also
+common key materials reused on different IP addresses.
 
-- SSH scanner and fingerprinter
-- scan and fingerprint hidden services
-- Get all SSH banners
-- Search hosts by fingerprint
-- Search hosts by [hassh](https://github.com/salesforce/hassh)
+# Features
+
+- A simple SSH scanner
+- A server storing key materials in a Redis database
+- A simple ReST API to lookup by SSH fingerprints (including [hassh](https://github.com/salesforce/hassh) or host (IPv4, IPv6 or onion addresses)
+- Statistics of SSH banners and SSH fingerprints
 
 ## Server Requirements
 
@@ -20,7 +22,7 @@ The Passive SSH server provide a fast-lookup database with the history of all SS
 
 - Python >= 3.6
 - [D4 paramiko](https://github.com/D4-project/paramiko.git)
-- pysocks (required to scan hidden services)
+- pysocks (required to scan Tor hidden services)
 
 ## Install
 
@@ -28,14 +30,14 @@ The Passive SSH server provide a fast-lookup database with the history of all SS
 ./install.sh
 ~~~~
 
-Install Redis and all pythons requirements.  
-All Python 3 code will be installed in a virtualenv (PSSHENV).
+- Install Redis and all pythons requirements.
+- All Python 3 code will be installed in a virtualenv (PSSHENV).
 
 ### Tor proxy
 
-The ssh scanner can use the tor proxy to scan an host or an hidden service.
+The ssh scanner can be used with a Tor proxy to scan a host or an hidden service.
 
-Install the tor proxy: `sudo apt-get install tor -y`
+Don't forget to install the Tor proxy if you want to scan Tor hidden services: `sudo apt-get install tor -y`
 
 ## Running
 
@@ -46,6 +48,8 @@ Launch the redis and the tornado server
 ~~~~
 
 ## API
+
+An API is available to query the Passive SSH server.
 
 By default, the tornado server for Passive SSH is running on port 8500
 
@@ -104,3 +108,4 @@ Get hosts by [hassh](https://github.com/salesforce/hassh):
 # License
 
 The software is free software/open source released under the GNU Affero General Public License version 3.
+
