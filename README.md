@@ -1,5 +1,6 @@
 # Passive SSH
 
+![Passive SSH logo](https://raw.githubusercontent.com/D4-project/passive-ssh/main/doc/logo/passivessh.png)
 Passive SSH is an open source framework composed of a scanner and server to store and lookup the SSH keys and fingerprints per host (IPv4/IPv6/onion).
 
 The key materials along fingerprints and hosts are stored in a fast-lookup database. The system provides an historical view of SSH keys seen but also
