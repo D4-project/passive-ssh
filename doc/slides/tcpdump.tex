@@ -1,0 +1,4 @@
+\begin{lstlisting}
+tcpdump -l -s 65535 -n -i vr0 -w - '( not port $PORT and not host $HOST )' | socat - OPENSSL-CONNECT:$COLLECTOR:$PORT,cert=/etc/openssl/client.pem,cafile=/etc/openssl/ca.crt,verify=1
+\end{lstlisting}
+

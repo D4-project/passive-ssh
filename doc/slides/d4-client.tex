@@ -1,0 +1,3 @@
+\begin{lstlisting}
+tcpdump -n -s0 -w - | ./d4 -c ./conf | socat - OPENSSL-CONNECT:$D4-SERVER-IP-ADDRESS:$PORT,verify=1
+\end{lstlisting}

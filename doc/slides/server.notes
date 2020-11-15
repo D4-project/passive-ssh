@@ -1,0 +1,31 @@
+Welcome to the d4-core wiki!
+
+## Server
+
+- Support TLS connection
+- Unpack header
+- Verify client secret key (HMAC)
+- check blocklist
+- Filter by types
+    (Only accept one connection by type-UUID - except: type 254)
+- Discard incorrect data
+- Save data in a Redis Stream (unique for each session)
+
+## Worker Manager (one by type)
+
+- Check if a new session is created and valid data are saved in a Redis stream
+- Launch a new Worker for each session
+
+## Worker
+- Get data for a stream
+- Reconstruct data
+- Save data on disk (with file rotation)
+- Sava data in Redis. Create a queue for a D4-Analyzer
+
+## Flask server
+- Get Sensors status, errors and statistics
+- Get all connected sensors
+- Manage Sensors (stream size limit, secret key, ...)
+- Manage Accepted types
+- UUID/IP blocklist
+- Create Analyzer Queues
