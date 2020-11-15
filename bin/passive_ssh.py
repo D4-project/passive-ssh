@@ -55,10 +55,13 @@ def get_all_ip():
 def get_all_banner():
     return redis_ssh.smembers('all:banner')
 
-def get_banner_host(banner, host_type=None):
-    if not host_type:
-        host_type = get_host_type(host)
-    return redis_ssh.smembers('banner:{}:{}'.format(host_type, banner))
+def get_banner_host(banner, hosts_types=None):
+    if not hosts_types:
+        hosts_types = get_all_hosts_types()
+    l_redis_keys = []
+    for host_type in hosts_types:
+        l_redis_keys.append('banner:{}:{}'.format(host_type, banner))
+    return redis_ssh.sunion(l_redis_keys[0], *l_redis_keys[1:])
 
 def get_banner_host_nb(banner, host_type=None):
     if not host_type:

@@ -48,6 +48,15 @@ class Get_all_banner(tornado.web.RequestHandler):
         response = {"banners": passive_ssh.get_stats_nb_banner(reverse=True)}
         self.write(json.dumps(response))
 
+class Get_all_banner_by_host(tornado.web.RequestHandler):
+    def get(self, q):
+        if not is_valid_host(q):
+            self.set_status(400)
+            self.finish(json.dumps({"Error": "Invalid Host"}))
+        else:
+            response = {"banner":q, "hosts": list(passive_ssh.get_banner_host(q))}
+            self.write(json.dumps(response))
+
 class get_all_keys_types(tornado.web.RequestHandler):
     def get(self):
         response = {"keys_types": list(passive_ssh.get_all_keys_types())}
@@ -119,7 +128,7 @@ application = tornado.web.Application([
     (r"/stats", Get_all_stats),
 
     (r"/banners",Get_all_banner),
-    ## TODO: get host by banners
+    (r"/banners/host/(.*)",Get_all_banner_by_host),
 
     (r"/keys/types",get_all_keys_types), # show nb ?
     (r"/host/ssh/(.*)", Get_host),
