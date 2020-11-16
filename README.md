@@ -69,7 +69,12 @@ Return server staticstics:
   - number of fingerprints by type
 
 #### `/banners`
-Return the list of all banners
+Return all banners ordered by scores
+
+#### `/banner/hosts`
+Get hosts by banner:
+  - banner
+  - list of hosts
 
 #### `/keys/types`
 Return the list of all keys types
@@ -85,6 +90,9 @@ Return host SSH metadata:
 #### `/host/history/<host>`
 Return the SSH history of an host
 
+#### `/fingerprints`
+Return all fingerprints ordered by scores
+
 #### `/fingerprint/all/<fingerprint>`
 Get hosts by fingerprint:
   - first seen
@@ -92,6 +100,7 @@ Get hosts by fingerprint:
   - key type
   - key base64
   - fingerprint
+  - list of hosts
 
 #### `/fingerprint/type/<key_type>/<fingerprint>`
 Get hosts by type of key and fingerprint:
@@ -100,8 +109,12 @@ Get hosts by type of key and fingerprint:
   - key type
   - key base64
   - fingerprint
+  - list of hosts
 
-#### `/hassh/host/<hassh>`
+#### `/hasshs`
+Return all [hasshs](https://github.com/salesforce/hassh) ordered by scores
+
+#### `/hassh/hosts/<hassh>`
 Get hosts by [hassh](https://github.com/salesforce/hassh):
   - hassh
   - list of hosts
@@ -110,4 +123,3 @@ Get hosts by [hassh](https://github.com/salesforce/hassh):
 # License
 
 The software is free software/open source released under the GNU Affero General Public License version 3.
-
