@@ -135,7 +135,7 @@ application = tornado.web.Application([
     (r"/host/ssh/(.*)", Get_host),
     (r"/host/history/(.*)",Get_host_history), # remove host from url path ?
 
-    (r"/fingerprints/stats", Get_fingerprints_stats),
+    (r"/fingerprints", Get_fingerprints_stats),
     # # TODO: stats by key type ?
     (r"/fingerprint/all/(.*)", Get_all_host_by_fingerprint),
     (r"/fingerprint/type/([a-zA-Z0-9-]*)/(.*)", Get_all_host_by_key_type_and_fingerprint),
