@@ -33,7 +33,9 @@ def save_ssh_scan(scan_dict):
     ## ##
 
     ## hassh ##
-    redis_ssh.sadd('hassh:{}:{}'.format(host_type, scan_dict['hassh']), host)
+    res = redis_ssh.sadd('hassh:{}:{}'.format(host_type, scan_dict['hassh']), host)
+    if res == 1:
+        redis_ssh.zincrby('all:hassh', 1, scan_dict['hassh'])
     redis_ssh.sadd('hassh:kex:{}'.format(scan_dict['hassh']), json.dumps(scan_dict['key_exchange']))
 
     redis_ssh.sadd('{}:hassh:kex:{}'.format(host_type, host), scan_dict['hassh'])

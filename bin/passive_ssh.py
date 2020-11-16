@@ -76,6 +76,13 @@ def get_banner_by_host(host, host_type=None):
 #### ####
 
 #### HASSH ####
+def get_all_hasshs(withscores=False):
+    if withscores:
+        res = redis_ssh.zrevrange('all:hassh', 0, -1, withscores=True, score_cast_func=int)
+        return dict(res)
+    else:
+        return redis_ssh.zrange('all:hassh', 0, -1)
+
 def get_hosts_by_hassh(hassh, hosts_types=['ip']):
     if not hosts_types:
         hosts_types = get_all_hosts_types(host)
