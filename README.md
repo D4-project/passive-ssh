@@ -43,17 +43,32 @@ Don't forget to install the Tor proxy if you want to scan Tor hidden services: `
 
 ## Running
 
-Launch the redis and the tornado server
+Launch the redis and the tornado server:
 
 ~~~~
 ./LAUNCH -l
+~~~~
+
+### Manual scan
+
+A SSH scanner is included to scan small networks or internal infrastructure.
+
+~~~~
+. ./PSSHENV/bin/activate
+cd bin/
+
+# Scan a host
+./ssh_scan.py -t <host: 10.0.0.12>
+
+# Scan a network range
+./ssh_scan.py -r <network range: 10.0.0.0/8>
 ~~~~
 
 ## API
 
 An API is available to query the Passive SSH server.
 
-By default, the tornado server for Passive SSH is running on port 8500
+By default, the tornado server for Passive SSH is running on port 8500.
 
 ~~~~
 curl http://localhost:8500/banners
