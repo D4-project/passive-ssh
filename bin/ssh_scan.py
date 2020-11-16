@@ -91,7 +91,15 @@ def is_domain_onion(domain):
     return str(domain).endswith('.onion')
 
 # timeout standard!=onion
-def get_socket_timeout(domain, use_proxy=False):
+def get_socket_timeout(domain, use_proxy=False, timeout=0):
+    if timeout:
+        try:
+            timeout = int(timeout)
+            if timeout > 0:
+                return timeout
+        except Exception:
+            pass
+
     if is_domain_onion(domain):
         return 30
     else:
@@ -168,8 +176,8 @@ def get_ssh_fingerprint(target, port, socket_timeout, preferred_key=None , use_p
         return (dict_key_exchange, host_pkey, host_ref)
 
 
-def ssh_fingerprinter(target, port, use_proxy=False, proxy_ip="127.0.0.1", proxy_port=9050):
-    socket_timeout = get_socket_timeout(target, use_proxy=use_proxy)
+def ssh_fingerprinter(target, port, use_proxy=False, proxy_ip="127.0.0.1", proxy_port=9050, timeout=0):
+    socket_timeout = get_socket_timeout(target, use_proxy=use_proxy, timeout=timeout)
 
     try:
         ssh_fingerprint, host_pkey, host_ref = get_ssh_fingerprint(target, port, socket_timeout, use_proxy=use_proxy, proxy_ip=proxy_ip, proxy_port=proxy_port)
@@ -201,12 +209,12 @@ def ssh_fingerprinter(target, port, use_proxy=False, proxy_ip="127.0.0.1", proxy
             pass
     return ssh_fingerprint
 
-def ssh_scanner(target, ssh_port, use_proxy=False, proxy_ip='127.0.0.1', proxy_port=9050):
+def ssh_scanner(target, ssh_port, use_proxy=False, proxy_ip='127.0.0.1', proxy_port=9050, timeout=0):
     if is_domain_onion(target):
         target = target.lower()
         use_proxy = True
     try:
-        res = ssh_fingerprinter(target, ssh_port, use_proxy=use_proxy, proxy_ip=proxy_ip, proxy_port=proxy_port)
+        res = ssh_fingerprinter(target, ssh_port, use_proxy=use_proxy, proxy_ip=proxy_ip, proxy_port=proxy_port, timeout=timeout)
     except ConnectionRefusedError:
         res = {}
     except socks.GeneralProxyError as e: # Unknow Host + Socket Timeout
@@ -222,6 +230,7 @@ if __name__ == '__main__':
     parser.add_argument('-p', '--port',help='SSH port' , type=int, default=22, dest='ssh_port')
     parser.add_argument('--proxy', help='SSH port', action="store_true")
     parser.add_argument('-v', '--verbose', help='Verbose output', action="store_true", default=False)
+    parser.add_argument('--timeout',help='timeout' , type=int, default=0, dest='in_timeout')
     parser.add_argument('-i', '--proxy_ip',help='proxy ip' , type=str, default='127.0.0.1', dest='proxy_ip')
     parser.add_argument('-pp', '--proxy_port',help='proxy port' , type=int, default=9050, dest='proxy_port')
     parser.add_argument('-r', '--trange', help='target network range express in CIDR block', type=str, dest='trange', required=False, default=None)
@@ -246,18 +255,19 @@ if __name__ == '__main__':
     use_proxy = args.proxy
     proxy_ip = args.proxy_ip
     proxy_port = args.proxy_port
+    in_timeout = args.in_timeout
 
     if args.verbose:
         print(target)
     if args.target:
-        res = ssh_scanner(target, ssh_port, use_proxy=use_proxy, proxy_ip=proxy_ip, proxy_port=proxy_port)
+        res = ssh_scanner(target, ssh_port, use_proxy=use_proxy, proxy_ip=proxy_ip, proxy_port=proxy_port, timeout=in_timeout)
         print(json.dumps(res))
         if res:
             passive_ingester.save_ssh_scan(res)
     else:
         for v in trange:
             try:
-                res = ssh_scanner(str(v), ssh_port, use_proxy=use_proxy, proxy_ip=proxy_ip, proxy_port=proxy_port)
+                res = ssh_scanner(str(v), ssh_port, use_proxy=use_proxy, proxy_ip=proxy_ip, proxy_port=proxy_port, timeout=in_timeout)
             except:
                 continue
             print(json.dumps(res))
@@ -265,5 +275,3 @@ if __name__ == '__main__':
                 passive_ingester.save_ssh_scan(res)
 
     print(time.time()-ds)
-
-
