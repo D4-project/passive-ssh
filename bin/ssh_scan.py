@@ -131,8 +131,8 @@ def get_ssh_fingerprint(target, port, socket_timeout, preferred_key=None , use_p
     ssh_transport = paramiko.transport.Transport(s)
     ssh_transport.local_version = SSH_BANNER
     # Default ssh timeout
-    #ssh_transport.banner_timeout = 15
-    #ssh_transport.handshake_timeout = 15
+    ssh_transport.banner_timeout = 5
+    ssh_transport.handshake_timeout = 5
 
     # force key algo
     if preferred_key:
