@@ -141,7 +141,7 @@ application = tornado.web.Application([
     (r"/fingerprint/type/([a-zA-Z0-9-]*)/(.*)", Get_all_host_by_key_type_and_fingerprint),
 
     (r"/hasshs", Get_all_hassh),
-    (r"/hassh/host/(.*)", Get_hosts_by_hassh),
+    (r"/hassh/hosts/(.*)", Get_hosts_by_hassh),
 
 ])
 
