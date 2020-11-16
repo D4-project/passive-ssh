@@ -48,7 +48,7 @@
         \begin{itemize}
                 \item Software written in Python 3 and released as an open source project\footnote{\url{https://github.com/D4-project/passive-ssh}}
                 \item The database is a {\bf Redis-compatible backend} (you can use Redis, kv-rocks or any compatible Redis backend)
-                \item A simple SSH scanner is included to scan small networks or internal infrastructure
+                \item A sample SSH scanner is included to scan small networks or internal infrastructure
                 \item CIRCL provides a {\bf database from an Internet-wide scan} (access can be requested for FIRST, TF-CSIRT and CNW members)
         \end{itemize}
 \end{frame}
@@ -328,7 +328,24 @@ NMJCl3pM6uxPnUhirccpobnHzO9C2cFAIMRGuy1/iJM/fwngGAlxYqtPJ8Pff7rTTcDrPF7YB7STSQXv
 \end{frame}
 
 
+\begin{frame}
+        \frametitle{Monitoring Attacker Infrastructure}
+        \begin{itemize}
+                \item {\bf Attackers are also system administrators} and use SSH to manage their infrastructure
+                \item Some SSH installation are used as back-door on different ports
+                \item {\bf Understanding attacker infrastructure}\footnote{A nice complement to Chapter 4 : Attack Infrastructure in Attribution of Advanced Persistent Threats, Timo Steffens} by looking at SSH banners, keys and fingerprints
+                \item SSH cryptographic keys are renewed less often than TLS certificates
+        \end{itemize}
+\end{frame}
 
+\begin{frame}
+        \frametitle{Uncloaking Tor hidden services with Passive SSH}
+        \begin{itemize}
+                \item We collected a set of Tor onion addresses (~60K) using the AIL framework
+                \item Then we scanned for SSH on those onion addresses
+                \item Finding {\bf common set of fingerprints} between onion addresses and Internet-wide scan in Passive SSH
+        \end{itemize}
+\end{frame}
 
 \begin{frame}
         \frametitle{What's next?}
