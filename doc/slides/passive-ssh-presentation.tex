@@ -53,11 +53,178 @@
         \end{itemize}
 \end{frame}
 
+\begin{frame}
+        \frametitle{What do you store? or What can I lookup?}
+        \includegraphics[scale=0.3]{sshhandshake.png}
+\end{frame}
+
+\begin{frame}[t,fragile]
+        \frametitle{}
+\lstdefinelanguage{JavaScript}{
+  keywords={typeof, new, true, false, catch, function, return, null, catch, switch, var, if, in, while, do, else, case, break},
+  keywordstyle=\color{blue}\bfseries,
+  ndkeywords={class, export, boolean, throw, implements, import, this},
+  ndkeywordstyle=\color{darkgray}\bfseries,
+  identifierstyle=\color{black},
+  sensitive=false,
+  comment=[l]{//},
+  morecomment=[s]{/*}{*/},
+  commentstyle=\color{purple}\ttfamily,
+  stringstyle=\color{red}\ttfamily,
+  morestring=[b]',
+  morestring=[b]"
+}
+\lstset{
+   language=JavaScript,
+   backgroundcolor=\color{lightgray},
+   extendedchars=true,
+   basicstyle=\footnotesize\ttfamily,
+   showstringspaces=false,
+   showspaces=false,
+   numbers=left,
+   numberstyle=\footnotesize,
+   numbersep=9pt,
+   tabsize=2,
+   breaklines=true,
+   showtabs=false,
+   captionpos=b
+}
+\lstset{breaklines=true, language=JavaScript}
+\begin{lstlisting}
+curl -s http://127.0.0.1:8500/banners | jq .
+{
+  "banners": {
+    "SSH-2.0-OpenSSH_7.6p1 Ubuntu-4ubuntu0.3": 14522,
+    "SSH-2.0-OpenSSH_7.4": 8036,
+    "SSH-2.0-OpenSSH_7.9p1 Debian-10+deb10u2": 4563,
+    "SSH-2.0-OpenSSH_7.2p2 Ubuntu-4ubuntu2.8": 4464,
+    "SSH-2.0-OpenSSH_7.4p1 Debian-10+deb9u7": 4301,
+    "SSH-2.0-OpenSSH_5.3": 2930,
+    "SSH-2.0-OpenSSH_8.2p1 Ubuntu-4ubuntu0.1": 2901,
+    "SSH-2.0-OpenSSH_7.2p2 Ubuntu-4ubuntu2.10": 2669,
+    "SSH-2.0-OpenSSH_6.7p1 Debian-5+deb8u8": 2295,
+    "SSH-2.0-OpenSSH_7.4p1 Debian-10+deb9u6": 1192,
+    "SSH-2.0-OpenSSH_6.6.1p1 Ubuntu-2ubuntu2.13": 1107,
+    "SSH-2.0-OpenSSH_6.7p1 Debian-5+deb8u3": 1024,
+\end{lstlisting}
+
+\end{frame}
+
+
+\begin{frame}[t,fragile]
+        \frametitle{}
+\lstdefinelanguage{JavaScript}{
+  keywords={typeof, new, true, false, catch, function, return, null, catch, switch, var, if, in, while, do, else, case, break},
+  keywordstyle=\color{blue}\bfseries,
+  ndkeywords={class, export, boolean, throw, implements, import, this},
+  ndkeywordstyle=\color{darkgray}\bfseries,
+  identifierstyle=\color{black},
+  sensitive=false,
+  comment=[l]{//},
+  morecomment=[s]{/*}{*/},
+  commentstyle=\color{purple}\ttfamily,
+  stringstyle=\color{red}\ttfamily,
+  morestring=[b]',
+  morestring=[b]"
+}
+\lstset{
+   language=JavaScript,
+   backgroundcolor=\color{lightgray},
+   extendedchars=true,
+   basicstyle=\footnotesize\ttfamily,
+   showstringspaces=false,
+   showspaces=false,
+   numbers=left,
+   numberstyle=\footnotesize,
+   numbersep=9pt,
+   tabsize=2,
+   breaklines=true,
+   showtabs=false,
+   captionpos=b
+}
+\lstset{breaklines=true, language=JavaScript}
+\begin{lstlisting}
+curl -s "http://127.0.0.1:8500/banner/hosts/SSH-2.0-OpenSSH_6.7p1%20OVH-rescue"  | jq .
+{
+  "banner": "SSH-2.0-OpenSSH_6.7p1 OVH-rescue",
+  "hosts": [
+    "188.165.216.153",
+    "137.74.204.16",
+    "188.165.233.197",
+    "188.165.199.211",
+    "188.165.192.121",
+    "137.74.204.58",
+    "188.165.224.149",
+    "188.165.211.205",
+    "188.165.216.162",
+    "188.165.216.155",
+    "188.165.194.193",
+\end{lstlisting}
+
+\end{frame}
+
+\begin{frame}[t,fragile]
+        \frametitle{}
+\lstdefinelanguage{JavaScript}{
+  keywords={typeof, new, true, false, catch, function, return, null, catch, switch, var, if, in, while, do, else, case, break},
+  keywordstyle=\color{blue}\bfseries,
+  ndkeywords={class, export, boolean, throw, implements, import, this},
+  ndkeywordstyle=\color{darkgray}\bfseries,
+  identifierstyle=\color{black},
+  sensitive=false,
+  comment=[l]{//},
+  morecomment=[s]{/*}{*/},
+  commentstyle=\color{purple}\ttfamily,
+  stringstyle=\color{red}\ttfamily,
+  morestring=[b]',
+  morestring=[b]"
+}
+\lstset{
+   language=JavaScript,
+   backgroundcolor=\color{lightgray},
+   extendedchars=true,
+   basicstyle=\footnotesize\ttfamily,
+   showstringspaces=false,
+   showspaces=false,
+   numbers=left,
+   numberstyle=\footnotesize,
+   numbersep=9pt,
+   tabsize=2,
+   breaklines=true,
+   showtabs=false,
+   captionpos=b
+}
+\lstset{breaklines=true, language=JavaScript}
+\begin{lstlisting}
+curl -s "http://127.0.0.1:8500/banner/hosts/SSH-2.0-lancom"  | jq .
+{
+  "banner": "SSH-2.0-lancom",
+  "hosts": [
+    "89.1.181.237",
+    "89.0.231.177",
+    "91.0.158.6",
+    "91.0.54.88",
+    "91.0.146.13",
+    "91.1.54.42",
+    "91.1.23.189",
+    "89.1.29.178",
+    "91.0.184.142",
+    "89.1.183.80",
+    "89.1.142.156",
+    "89.1.31.148",
+
+\end{lstlisting}
+
+\end{frame}
+
+
+
 
 \begin{frame}
         \frametitle{What's next?}
         \begin{itemize}
                \item A MISP module to get Passive {\bf SSH expansion and pivots in MISP project}
+               \item Add SSH correlation in AIL framework for crawled Tor hidden services\footnote{\url{https://github.com/ail-project/ail-framework}}
                \item Pcap feeder to Passive SSH
                \item Review of cryptographic materials\footnote{\url{https://github.com/D4-project/snake-oil-crypto}} from existing Passive SSH database
                \item Improvement of the Passive SSH code base and release of version 1.0
