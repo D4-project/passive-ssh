@@ -214,7 +214,117 @@ curl -s "http://127.0.0.1:8500/banner/hosts/SSH-2.0-lancom"  | jq .
     "89.1.31.148",
 
 \end{lstlisting}
+\end{frame}
 
+
+\begin{frame}[t,fragile]
+        \frametitle{}
+\lstdefinelanguage{JavaScript}{
+  keywords={typeof, new, true, false, catch, function, return, null, catch, switch, var, if, in, while, do, else, case, break},
+  keywordstyle=\color{blue}\bfseries,
+  ndkeywords={class, export, boolean, throw, implements, import, this},
+  ndkeywordstyle=\color{darkgray}\bfseries,
+  identifierstyle=\color{black},
+  sensitive=false,
+  comment=[l]{//},
+  morecomment=[s]{/*}{*/},
+  commentstyle=\color{purple}\ttfamily,
+  stringstyle=\color{red}\ttfamily,
+  morestring=[b]',
+  morestring=[b]"
+}
+\lstset{
+   language=JavaScript,
+   backgroundcolor=\color{lightgray},
+   extendedchars=true,
+   basicstyle=\tiny\ttfamily,
+   showstringspaces=false,
+   showspaces=false,
+   numbers=left,
+   numberstyle=\footnotesize,
+   numbersep=9pt,
+   tabsize=2,
+   breaklines=true,
+   showtabs=false,
+   captionpos=b
+}
+\lstset{breaklines=true, language=JavaScript}
+\begin{lstlisting}
+ curl -s "http://127.0.0.1:8500/host/ssh/89.1.181.237"  | jq .
+{
+  "first_seen": "20201116",
+  "last_seen": "20201116",
+  "port": 22,
+  "banner": [
+    "SSH-2.0-lancom"
+  ],
+  "hassh": {
+    "deabc869d8b35c2fbef0831b838bf196": [
+      "{\"key\": [\"rsa-sha2-512\", \"rsa-sha2-256\", \"ssh-rsa\", \"ssh-dss\"], \"encrypt\": [\"aes256-ctr\", \"aes192-ctr\", \"aes128-ctr\", \"aes256-cbc\", \"aes192-cbc\", \"aes128-cbc\", \"blowfish-ctr\", \"
+blowfish-cbc\", \"arcfour256\", \"arcfour128\", \"arcfour\", \"3des-ctr\", \"3des-cbc\"], \"mac\": [\"hmac-sha2-512\", \"hmac-sha2-512-96\", \"hmac-sha2-256\", \"hmac-sha2-256-96\", \"hmac-sha1\", \"hmac-sha1-96
+\", \"hmac-md5\", \"hmac-md5-96\"], \"compress\": [\"none\", \"zlib\"], \"lang\": []}"
+    ]
+  },
+  "keys": [
+    {
+      "type": "ssh-rsa",
+      "fingerprint": "af:80:1e:6f:5a:cf:f3:6e:7d:2a:aa:a5:f3:05:0e:1b"
+    },
+    {
+      "type": "ssh-dss",
+      "fingerprint": "8a:b9:c0:a6:b3:20:de:86:f6:10:97:8e:27:be:f1:ea"
+    }
+  ]
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[t,fragile]
+        \frametitle{}
+\lstdefinelanguage{JavaScript}{
+  keywords={typeof, new, true, false, catch, function, return, null, catch, switch, var, if, in, while, do, else, case, break},
+  keywordstyle=\color{blue}\bfseries,
+  ndkeywords={class, export, boolean, throw, implements, import, this},
+  ndkeywordstyle=\color{darkgray}\bfseries,
+  identifierstyle=\color{black},
+  sensitive=false,
+  comment=[l]{//},
+  morecomment=[s]{/*}{*/},
+  commentstyle=\color{purple}\ttfamily,
+  stringstyle=\color{red}\ttfamily,
+  morestring=[b]',
+  morestring=[b]"
+}
+\lstset{
+   language=JavaScript,
+   backgroundcolor=\color{lightgray},
+   extendedchars=true,
+   basicstyle=\footnotesize\ttfamily,
+   showstringspaces=false,
+   showspaces=false,
+   numbers=left,
+   numberstyle=\footnotesize,
+   numbersep=9pt,
+   tabsize=2,
+   breaklines=true,
+   showtabs=false,
+   captionpos=b
+}
+\lstset{breaklines=true, language=JavaScript}
+\begin{lstlisting}
+curl -s "http://127.0.0.1:8500/fingerprint/all/af:80:1e:6f:5a:cf:f3:6e:7d:2a:aa:a5:f3:05:0e:1b"  | jq .
+{
+  "type": "ssh-rsa",
+  "first_seen": "20201116",
+  "last_seen": "20201116",
+  "base64": "ssh-rsa AAAAB3NzaC1yc2EAAAABEQAAAQEAwe/8ooNGMyQCYTYcDlAAj1Da3e4uPbLNBA7zs/oKdeS9JhuJBO5oN0rwKk9B7Y429AL3OHHZUPVQMJ2Rt+fEfObYtLt+BI+289/DYdddUNxX3gU80rF4qiz1uQJ1FjcyW+LN1y219DE9rSshjY6aNPUshDhRuGnBxS
+NMJCl3pM6uxPnUhirccpobnHzO9C2cFAIMRGuy1/iJM/fwngGAlxYqtPJ8Pff7rTTcDrPF7YB7STSQXvBTgiwCHVEuxyQaX7Aik5BM0A0DHDrwf6VHDbqWXK6AAM+01W8j1b+lN+yzT4+EZbQJ4kQKfNb8aGWAcHacjs9VOfr4w79ynz/lPQ==",
+  "fingerprint": "af:80:1e:6f:5a:cf:f3:6e:7d:2a:aa:a5:f3:05:0e:1b",
+  "hosts": [
+    "89.1.181.237"
+  ]
+}
+\end{lstlisting}
 \end{frame}
 
 
