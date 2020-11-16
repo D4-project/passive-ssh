@@ -107,6 +107,11 @@ class Get_all_host_by_key_type_and_fingerprint(tornado.web.RequestHandler):
             dict_resp['hosts'] = response
             self.write(json.dumps(dict_resp))
 
+class Get_all_hassh(tornado.web.RequestHandler):
+    def get(self):
+        response = passive_ssh.get_all_hasshs(withscores=True)
+        self.write(json.dumps(response))
+
 class Get_hosts_by_hassh(tornado.web.RequestHandler):
     def get(self, q):
         if not is_valid_hassh(q):
@@ -135,6 +140,7 @@ application = tornado.web.Application([
     (r"/fingerprint/all/(.*)", Get_all_host_by_fingerprint),
     (r"/fingerprint/type/([a-zA-Z0-9-]*)/(.*)", Get_all_host_by_key_type_and_fingerprint),
 
+    (r"/hasshs", Get_all_hassh),
     (r"/hassh/host/(.*)", Get_hosts_by_hassh),
 
 ])
