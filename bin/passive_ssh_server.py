@@ -129,7 +129,7 @@ application = tornado.web.Application([
     (r"/stats", Get_all_stats),
 
     (r"/banners",Get_all_banner),
-    (r"/banners/host/(.*)",Get_all_banner_by_host),
+    (r"/banner/hosts/(.*)",Get_all_banner_by_host),
 
     (r"/keys/types",get_all_keys_types), # show nb ?
     (r"/host/ssh/(.*)", Get_host),
