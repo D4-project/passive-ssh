@@ -14,8 +14,10 @@ import binascii
 import datetime
 import paramiko
 import netaddr
-
+import base64
 from hashlib import md5
+from kaitaistruct import KaitaiStream, BytesIO
+from ssh_public_key import SshPublicKey
 
 import passive_ingester
 
@@ -156,6 +158,22 @@ def get_ssh_fingerprint(target, port, socket_timeout, preferred_key=None , use_p
     host_pkey['fingerprint'] = ':'.join(fingerprint[i:i+2] for i in range(0, len(fingerprint), 2))
     host_pkey['name'] = key.get_name()
     host_pkey['base64'] = '{} {}'.format(host_pkey['name'], key.get_base64())
+    parsed_key = SshPublicKey(KaitaiStream(io.BytesIO(base64.b64decode(key.get_base64().encode('utf-8')))))
+    if parsed_key.key_name.value == "ssh-rsa":
+        host_pkey['exponent'] = int.from_bytes(parsed_key.body.rsa_e.body, "big")
+        host_pkey['modulus'] = int.from_bytes(parsed_key.body.rsa_n.body, "big")
+    elif parsed_key.key_name.value == "ecdsa-sha2-nistp256":
+        host_pkey['curve'] = parsed_key.body.curve_name.value
+        host_pkey['ec'] = int.from_bytes(parsed_key.body.ec.body, "big")
+    elif parsed_key.key_name.value == "ssh-ed25519":
+        host_pkey['len_pk'] = int.from_bytes(parsed_key.body.len_pk.body, "big")
+        host_pkey['pk'] = int.from_bytes(parsed_key.body.pk.body, "big")
+    elif parsed_key.key_name.value == "ssh-dss":
+        host_pkey['p'] = int.from_bytes(parsed_key.body.dsa_p.body, "big")
+        host_pkey['q'] = int.from_bytes(parsed_key.body.dsa_q.body, "big")
+        host_pkey['g'] = int.from_bytes(parsed_key.body.dsa_g.body, "big")
+        host_pkey['dsa_pub_key'] = int.from_bytes(parsed_key.body.dsa_pub_key.body, "big")
+
 
     # # TODO: get IP/Domain
     # # TODO: # FIXME: AD DNS
