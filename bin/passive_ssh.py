@@ -138,8 +138,11 @@ def get_hosts_by_fingerprint(fingerprint, host_types=['ip', 'onion']):
             l_redis_keys.append('{}:fingerprint:{}:{}'.format(host_type, key_type, fingerprint))
     return redis_ssh.sunion(l_redis_keys[0], *l_redis_keys[1:])
 
-def get_hosts_by_key_type_and_fingerprint(key_type, fingerprint, host_types=['ip']):
-    return redis_ssh.smembers('{}:fingerprint:{}:{}'.format(host_type, key_type, fingerprint))
+def get_hosts_by_key_type_and_fingerprint(key_type, fingerprint, host_types=['ip', 'onion']):
+        l_redis_keys = []
+        for host_type in host_types:
+            l_redis_keys.append('{}:fingerprint:{}:{}'.format(host_type, key_type, fingerprint))
+        return redis_ssh.sunion(l_redis_keys[0], *l_redis_keys[1:])
 #### ####
 
 def get_host_history(host, host_type=None, date_from=None, date_to=None, get_key=False):
