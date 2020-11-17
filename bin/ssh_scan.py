@@ -166,8 +166,8 @@ def get_ssh_fingerprint(target, port, socket_timeout, preferred_key=None , use_p
         host_pkey['curve'] = parsed_key.body.curve_name.value
         host_pkey['ec'] = int.from_bytes(parsed_key.body.ec.body, "big")
     elif parsed_key.key_name.value == "ssh-ed25519":
-        host_pkey['len_pk'] = int.from_bytes(parsed_key.body.len_pk.body, "big")
-        host_pkey['pk'] = int.from_bytes(parsed_key.body.pk.body, "big")
+        host_pkey['len_pk'] = parsed_key.body.len_pk
+        host_pkey['pk'] = int.from_bytes(parsed_key.body.pk, "big")
     elif parsed_key.key_name.value == "ssh-dss":
         host_pkey['p'] = int.from_bytes(parsed_key.body.dsa_p.body, "big")
         host_pkey['q'] = int.from_bytes(parsed_key.body.dsa_q.body, "big")
