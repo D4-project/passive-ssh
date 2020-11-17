@@ -3,6 +3,10 @@
 
 import redis
 import json
+import io
+import base64
+from kaitaistruct import KaitaiStream, BytesIO
+from ssh_public_key import SshPublicKey
 
 redis_host = 'localhost'
 redis_port = 7301
@@ -24,6 +28,26 @@ def unpack_date(date):
         except:
             date = None
     return date
+
+def parse_crypto_material(base64key):
+    b64 = base64key.split(' ')
+    host_pkey = {}
+    parsed_key = SshPublicKey(KaitaiStream(io.BytesIO(base64.b64decode(b64[1].encode('utf-8')))))
+    if parsed_key.key_name.value == "ssh-rsa":
+        host_pkey['exponent'] = str(int.from_bytes(parsed_key.body.rsa_e.body, "big"))
+        host_pkey['modulus'] = str(int.from_bytes(parsed_key.body.rsa_n.body, "big"))
+    elif parsed_key.key_name.value == "ecdsa-sha2-nistp256":
+        host_pkey['curve'] = str(parsed_key.body.curve_name.value)
+        host_pkey['ec'] = str(int.from_bytes(parsed_key.body.ec.body, "big"))
+    elif parsed_key.key_name.value == "ssh-ed25519":
+        host_pkey['len_pk'] = str(parsed_key.body.len_pk)
+        host_pkey['pk'] = str(int.from_bytes(parsed_key.body.pk, "big"))
+    elif parsed_key.key_name.value == "ssh-dss":
+        host_pkey['p'] = str(int.from_bytes(parsed_key.body.dsa_p.body, "big"))
+        host_pkey['q'] = str(int.from_bytes(parsed_key.body.dsa_q.body, "big"))
+        host_pkey['g'] = str(int.from_bytes(parsed_key.body.dsa_g.body, "big"))
+        host_pkey['dsa_pub_key'] = str(int.from_bytes(parsed_key.body.dsa_pub_key.body, "big"))
+    return host_pkey
 
 ######################################
 
@@ -209,6 +233,7 @@ def get_key_metadata(fingerprint, keys_types=[]):
             key_metadata['first_seen'] = get_key_metadata_first_seen(key_type, fingerprint)
             key_metadata['last_seen'] = get_key_metadata_last_seen(key_type, fingerprint)
             key_metadata['base64'] = get_key_base64(key_type, fingerprint)
+            key_metadata['crypto_material'] = parse_crypto_material(key_metadata['base64'])
             return key_metadata
     return {}
 
@@ -217,6 +242,7 @@ def get_key_metadata_by_key_type(key_type, fingerprint):
     key_metadata['first_seen'] = redis_ssh.hget('key_metadata:{}:{}'.format(key_type, fingerprint), 'first_seen')
     key_metadata['last_seen'] = redis_ssh.hget('key_metadata:{}:{}'.format(key_type, fingerprint), 'last_seen')
     key_metadata['base64'] = get_key_base64(key_type, fingerprint)
+    key_metadata['crypto_material'] = parse_crypto_material(key_metadata['base64'])
     return key_metadata
 
 def get_key_base64(key_type, fingerprint):
