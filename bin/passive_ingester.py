@@ -55,27 +55,28 @@ def save_ssh_scan(scan_dict):
 
     ## pkey ##
     for pkey in scan_dict['host_keys']:
-        redis_ssh.sadd('all:key:type', pkey['name'])
-        redis_ssh.sadd('all:key:fingerprint:{}'.format(pkey['name']), pkey['fingerprint'])
+        if pkey:
+            redis_ssh.sadd('all:key:type', pkey['name'])
+            redis_ssh.sadd('all:key:fingerprint:{}'.format(pkey['name']), pkey['fingerprint'])
 
-        redis_ssh.sadd('all:{}:fingerprint'.format(host_type), ';'.join( (pkey['name'], pkey['fingerprint']) ))
+            redis_ssh.sadd('all:{}:fingerprint'.format(host_type), ';'.join( (pkey['name'], pkey['fingerprint']) ))
 
-        # search by fingerprint
-        redis_ssh.sadd('{}:fingerprint:{}:{}'.format(host_type, pkey['name'], pkey['fingerprint']), host)
+            # search by fingerprint
+            redis_ssh.sadd('{}:fingerprint:{}:{}'.format(host_type, pkey['name'], pkey['fingerprint']), host)
 
-        # key history
-        redis_ssh.sadd('{}:fingerprint:{}:{}'.format(host_type, host, scan_dict['epoch']), ';'.join( (pkey['name'], pkey['fingerprint']) ))
+            # key history
+            redis_ssh.sadd('{}:fingerprint:{}:{}'.format(host_type, host, scan_dict['epoch']), ';'.join( (pkey['name'], pkey['fingerprint']) ))
 
-        # search by host
-        res = redis_ssh.sadd('{}:{}'.format(host_type, host), ';'.join( (pkey['name'], pkey['fingerprint']) ))
-        if res == 1:
-            redis_ssh.zincrby('all:key:fingerprint', 1, pkey['fingerprint'])
+            # search by host
+            res = redis_ssh.sadd('{}:{}'.format(host_type, host), ';'.join( (pkey['name'], pkey['fingerprint']) ))
+            if res == 1:
+                redis_ssh.zincrby('all:key:fingerprint', 1, pkey['fingerprint'])
 
-        # pkey metadata
-        if not redis_ssh.exists('key_metadata:{}:{}'.format(pkey['name'], pkey['fingerprint'])):
-            redis_ssh.hset('key_metadata:{}:{}'.format(pkey['name'], pkey['fingerprint']), 'first_seen', scan_dict['date'])
-            redis_ssh.hset('key_metadata:{}:{}'.format(pkey['name'], pkey['fingerprint']), 'base64', pkey['base64'])
-        redis_ssh.hset('key_metadata:{}:{}'.format(pkey['name'], pkey['fingerprint']), 'last_seen', scan_dict['date'])
+            # pkey metadata
+            if not redis_ssh.exists('key_metadata:{}:{}'.format(pkey['name'], pkey['fingerprint'])):
+                redis_ssh.hset('key_metadata:{}:{}'.format(pkey['name'], pkey['fingerprint']), 'first_seen', scan_dict['date'])
+                redis_ssh.hset('key_metadata:{}:{}'.format(pkey['name'], pkey['fingerprint']), 'base64', pkey['base64'])
+            redis_ssh.hset('key_metadata:{}:{}'.format(pkey['name'], pkey['fingerprint']), 'last_seen', scan_dict['date'])
 
 
 if __name__ == '__main__':

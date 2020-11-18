@@ -132,6 +132,8 @@ def get_ssh_fingerprint(target, port, socket_timeout, preferred_key=None , use_p
     # Default ssh timeout
     ssh_transport.banner_timeout = 5
     ssh_transport.handshake_timeout = 5
+    ssh_transport.auth_timeout = 10
+    ssh_transport.clear_to_send_timeout = 20
 
     # force key algo
     if preferred_key:
@@ -141,8 +143,12 @@ def get_ssh_fingerprint(target, port, socket_timeout, preferred_key=None , use_p
     clean_log_buffer()
     try:
         ssh_transport.connect(hostkey=None)
-    except paramiko.ssh_exception.SSHException:
-        print('SSH EXCEPTION CATCHED')
+    except paramiko.ssh_exception.SSHException as e:
+        print('SSH EXCEPTION: {}:{} - {}, {}'.format(target, port, preferred_key, e))
+        return {}
+    except EOFError as e:
+        print('EOF in paramiko transport thread: {}:{} - key: {}'.format(target, port, preferred_key))
+        return {}
 
     if not preferred_key:
         dict_key_exchange = log_parser()
