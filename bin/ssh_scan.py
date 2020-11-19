@@ -106,6 +106,12 @@ def get_socket_timeout(domain, use_proxy=False, timeout=0):
             return 30
         return 1
 
+def add_error_stats(stats_dict, error_name):
+    if not 'errors' in stats_dict:
+        stats_dict['errors'] = {}
+    error_name = str(error_name).replace('()', '')
+    stats_dict['errors'][error_name] = stats_dict['errors'].get(error_name, 0) + 1
+
 #### HASSH ####
 # # TODO: add lang ?
 def get_hassh(key_exchange):
@@ -139,10 +145,12 @@ def get_ssh_fingerprint(target, port, socket_timeout, preferred_key=None , use_p
     if preferred_key:
         ssh_transport._preferred_keys = [preferred_key]
 
+    ssh_transport.set_gss_host(gss_host=None, trust_dns=True, gssapi_requested=False)
+
     # clear other logs
     clean_log_buffer()
     try:
-        ssh_transport.connect(hostkey=None)
+        ssh_transport.start_client(timeout=20)
     except paramiko.ssh_exception.SSHException as e:
         print('SSH EXCEPTION: {}:{} - {}, {}'.format(target, port, preferred_key, e))
         return {}
@@ -154,8 +162,12 @@ def get_ssh_fingerprint(target, port, socket_timeout, preferred_key=None , use_p
         dict_key_exchange = log_parser()
         host_ref = s.getpeername()[0]
 
-    key = ssh_transport.get_remote_server_key()
-    fingerprint = binascii.hexlify(key.get_fingerprint()).decode()
+    try:
+        key = ssh_transport.get_remote_server_key()
+        fingerprint = binascii.hexlify(key.get_fingerprint()).decode()
+    except paramiko.ssh_exception.SSHException as e:
+        print('SSH EXCEPTION: {}:{} - {}, {}'.format(target, port, preferred_key, e))
+        return {}
 
     host_pkey = {}
     host_pkey['fingerprint'] = ':'.join(fingerprint[i:i+2] for i in range(0, len(fingerprint), 2))
@@ -187,8 +199,10 @@ def ssh_fingerprinter(target, port, use_proxy=False, proxy_ip="127.0.0.1", proxy
     try:
         ssh_fingerprint, host_pkey, host_ref = get_ssh_fingerprint(target, port, socket_timeout, use_proxy=use_proxy, proxy_ip=proxy_ip, proxy_port=proxy_port)
     except socket.timeout:
+        #add_error_stats(stats, 'socket_timeout')
         return {}
     except OSError as e:
+        #add_error_stats(stats, e)
         print(e)
         return {}
 
@@ -219,13 +233,20 @@ def ssh_scanner(target, ssh_port, use_proxy=False, proxy_ip='127.0.0.1', proxy_p
         target = target.lower()
         use_proxy = True
     try:
-        res = ssh_fingerprinter(target, ssh_port, use_proxy=use_proxy, proxy_ip=proxy_ip, proxy_port=proxy_port, timeout=timeout)
+        res_scan = ssh_fingerprinter(target, ssh_port, use_proxy=use_proxy, proxy_ip=proxy_ip, proxy_port=proxy_port, timeout=timeout)
     except ConnectionRefusedError:
-        res = {}
+        res_scan = {}
+        #add_error_stats(stats, 'ConnectionRefusedError')
     except socks.GeneralProxyError as e: # Unknow Host + Socket Timeout
         print(e)
-        res = {}
-    return res
+        res_scan = {}
+        #add_error_stats(stats, e)
+
+    # stats
+    # stats['nb_hosts_scanned'] = stats.get('nb_hosts_scanned', 0) + 1
+    # if res_scan:
+    #     stats['nb_ssh_hosts'] = stats.get('nb_ssh_hosts', 0) + 1
+    return res_scan
 
 if __name__ == '__main__':
 
@@ -265,18 +286,18 @@ if __name__ == '__main__':
     if args.verbose:
         print(target)
     if args.target:
-        res = ssh_scanner(target, ssh_port, use_proxy=use_proxy, proxy_ip=proxy_ip, proxy_port=proxy_port, timeout=in_timeout)
-        print(json.dumps(res))
-        if res:
-            passive_ingester.save_ssh_scan(res)
+        res_scan = ssh_scanner(target, ssh_port, use_proxy=use_proxy, proxy_ip=proxy_ip, proxy_port=proxy_port, timeout=in_timeout)
+        print(json.dumps(res_scan))
+        if res_scan:
+            passive_ingester.save_ssh_scan(res_scan)
     else:
         for v in trange:
             try:
-                res = ssh_scanner(str(v), ssh_port, use_proxy=use_proxy, proxy_ip=proxy_ip, proxy_port=proxy_port, timeout=in_timeout)
+                res_scan = ssh_scanner(str(v), ssh_port, use_proxy=use_proxy, proxy_ip=proxy_ip, proxy_port=proxy_port, timeout=in_timeout)
             except:
                 continue
-            print(json.dumps(res))
-            if res:
-                passive_ingester.save_ssh_scan(res)
+            print(json.dumps(res_scan))
+            if res_scan:
+                passive_ingester.save_ssh_scan(res_scan)
 
     print(time.time()-ds)
