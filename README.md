@@ -134,6 +134,9 @@ Get hosts by [hassh](https://github.com/salesforce/hassh):
   - hassh
   - list of hosts
   - kexinit
+# Existing Passive SSH database
+
+- CIRCL Passive SSH - [access can be requested](https://www.circl.lu/contact/) if you are a CSIRT member of [FIRST.org](https://www.first.org/), [TF-CSIRT](https://www.trusted-introducer.org/) or [CNW network](https://www.enisa.europa.eu/topics/csirts-in-europe/csirts-network).
 
 # License
 
