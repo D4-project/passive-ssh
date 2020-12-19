@@ -282,6 +282,14 @@ def get_all_stats():
     dict_stat['keys'] = {}
     for key_type in get_all_keys_types():
         dict_stat['keys'][key_type] = redis_ssh.scard('all:key:fingerprint:{}'.format(key_type))
+    dict_stat['compress'] = redis_ssh.zrevrange('stats:compress', 0, -1,
+                                                withscores=True,
+                                                score_cast_func=int)
+    dict_stat['mac'] = redis_ssh.zrevrange('stats:mac', 0, -1, withscores=True,
+                                          score_cast_func=int)
+    dict_stat['encrypt'] = redis_ssh.zrevrange('stats:compress', 0, -1,
+                                               withscores=True,
+                                               score_cast_func=int)
     return dict_stat
 
 #### ####
