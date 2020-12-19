@@ -30,7 +30,21 @@ def save_ssh_scan(scan_dict):
     redis_ssh.sadd('banner:{}:{}'.format(host_type, scan_dict['banner']), host)
 
     redis_ssh.sadd('{}:banner:{}'.format(host_type, host), scan_dict['banner'])
-    ## ##
+
+    ## Additional statistics for compression algorithms, mac algorithms and
+    ## symmetric encryption algorithms.
+    ## The result is approximative as at each scan it will be updated but this gives
+    ## an idea of the propertion of each of the algorithms.
+
+    if 'compress' in scan_dict['key_exchange']:
+        for compress_algo in scan_dict['key_exchange']['compress']:
+            redis_ssh.zincrby('stats:compress', 1, compress_algo)
+    if 'mac' in scan_dict['key_exchange']:
+        for mac_algo in scan_dict['key_exchange']['mac']:
+            redis_ssh.zincrby('stats:mac', 1, mac_algo)
+    if 'encrypt' in scan_dict['key_exchange']:
+        for encrypt_algo in scan_dict['key_exchange']['encrypt']:
+            redis_ssh.zincrby('stats:encrypt', 1, encrypt_algo)
 
     ## hassh ##
     res = redis_ssh.sadd('hassh:{}:{}'.format(host_type, scan_dict['hassh']), host)
