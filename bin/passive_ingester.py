@@ -55,7 +55,7 @@ def save_ssh_scan(scan_dict):
 
     ## pkey ##
     for pkey in scan_dict['host_keys']:
-        if pkey:
+        if pkey and 'name' in pkey:
             redis_ssh.sadd('all:key:type', pkey['name'])
             redis_ssh.sadd('all:key:fingerprint:{}'.format(pkey['name']), pkey['fingerprint'])
 
