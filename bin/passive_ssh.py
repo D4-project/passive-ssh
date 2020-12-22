@@ -287,7 +287,7 @@ def get_all_stats():
                                                 score_cast_func=int)
     dict_stat['mac'] = redis_ssh.zrevrange('stats:mac', 0, -1, withscores=True,
                                           score_cast_func=int)
-    dict_stat['encrypt'] = redis_ssh.zrevrange('stats:encrypt' 0, -1,
+    dict_stat['encrypt'] = redis_ssh.zrevrange('stats:encrypt', 0, -1,
                                                withscores=True,
                                                score_cast_func=int)
     return dict_stat
