@@ -86,7 +86,7 @@ Return server staticstics:
 #### `/banners`
 Return all banners ordered by scores
 
-#### `/banner/hosts`
+#### `/banner/hosts/<banner>`
 Get hosts by banner:
   - banner
   - list of hosts
