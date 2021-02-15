@@ -309,6 +309,8 @@ if __name__ == '__main__':
                 res_scan = ssh_scanner(str(v), ssh_port, use_proxy=use_proxy, proxy_ip=proxy_ip, proxy_port=proxy_port, timeout=in_timeout)
             except:
                 continue
+            if args.verbose:
+                print("Scanning {}...".format(str(v)))
             print(json.dumps(res_scan))
             if res_scan:
                 passive_ingester.save_ssh_scan(res_scan)
