@@ -2,6 +2,7 @@
 # -*-coding:UTF-8 -*
 
 import io
+import os
 import re
 import sys
 import json
@@ -260,18 +261,30 @@ if __name__ == '__main__':
     parser.add_argument('-i', '--proxy_ip',help='proxy ip' , type=str, default='127.0.0.1', dest='proxy_ip')
     parser.add_argument('-pp', '--proxy_port',help='proxy port' , type=int, default=9050, dest='proxy_port')
     parser.add_argument('-r', '--trange', help='target network range express in CIDR block', type=str, dest='trange', required=False, default=None)
+    parser.add_argument('-f', '--file', help='Scan all targets from the given file', type=str, dest='tflist', required=False, default=None)
 
     # Required argument
     requiredNamed = parser.add_argument_group('required arguments')
     requiredNamed.add_argument('-t', '--target',help='target domain or ip' , type=str, dest='target', required=False, default=None)
     args = parser.parse_args()
 
+    trange = []
     if args.trange:
         trange = netaddr.IPNetwork(args.trange)
 
-    if args.target is None and args.trange is None:
+    if args.target is None and args.trange is None and args.tflist is None:
         parser.print_help()
         sys.exit(0)
+
+    l_targets = []
+    if args.tflist:
+        if not os.path.isfile(args.tflist):
+            print(f'Error: File not found {args.tflist}')
+            sys.exit(1)
+        else:
+            with open (args.tflist, 'r') as f:
+                content = f.read()
+                l_targets = content.splitlines()
 
     # target to scan
     target = args.target
@@ -290,11 +303,22 @@ if __name__ == '__main__':
         print(json.dumps(res_scan))
         if res_scan:
             passive_ingester.save_ssh_scan(res_scan)
-    else:
+    if trange:
         for v in trange:
             try:
                 res_scan = ssh_scanner(str(v), ssh_port, use_proxy=use_proxy, proxy_ip=proxy_ip, proxy_port=proxy_port, timeout=in_timeout)
             except:
+                continue
+            print(json.dumps(res_scan))
+            if res_scan:
+                passive_ingester.save_ssh_scan(res_scan)
+    if l_targets:
+        for target in l_targets:
+            try:
+                print(target)
+                res_scan = ssh_scanner(str(target), ssh_port, use_proxy=use_proxy, proxy_ip=proxy_ip, proxy_port=proxy_port, timeout=in_timeout)
+            except Exception as e:
+                print(e)
                 continue
             print(json.dumps(res_scan))
             if res_scan:
