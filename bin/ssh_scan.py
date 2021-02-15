@@ -268,18 +268,18 @@ if __name__ == '__main__':
     requiredNamed.add_argument('-t', '--target',help='target domain or ip' , type=str, dest='target', required=False, default=None)
     args = parser.parse_args()
 
-    trange = []
-    if args.trange:
-        trange = netaddr.IPNetwork(args.trange)
-
     if args.target is None and args.trange is None and args.tflist is None:
         parser.print_help()
         sys.exit(0)
 
+    trange = []
+    if args.trange:
+        trange = netaddr.IPNetwork(args.trange)
+
     l_targets = []
     if args.tflist:
         if not os.path.isfile(args.tflist):
-            print(f'Error: File not found {args.tflist}')
+            print(f'Error: File not found {args.tflist}', file=sys.stderr, flush=True)
             sys.exit(1)
         else:
             with open (args.tflist, 'r') as f:
