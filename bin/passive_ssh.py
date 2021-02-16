@@ -260,8 +260,16 @@ def deanonymize_onion():
         for domain in domains:
             if domain not in deanonymized_onion:
                 deanonymized_onion[domain] = get_host_metadata(domain, banner=True, hassh=True, kex=True, pkey=True)
-            deanonymized_onion['ip'] = get_hosts_by_fingerprint(fingerprint, host_types=['ip'])
-            deanonymized_onion['matched_keys'] = row_fingerprint
+            if not 'ip' in deanonymized_onion[domain]['ip']:
+                deanonymized_onion[domain]['ip'] = list(get_hosts_by_fingerprint(fingerprint, host_types=['ip']))
+            else:
+                for ip_addr in get_hosts_by_fingerprint(fingerprint, host_types=['ip']):
+                    if ip_addr not in deanonymized_onion[domain]['ip']:
+                        deanonymized_onion[domain]['ip'].append(ip_addr)
+            if not 'matched_keys' in deanonymized_onion[domain]:
+                deanonymized_onion['matched_keys'] = [{'type': key_type, 'fingerprint': fingerprint}]
+            else:
+                deanonymized_onion['matched_keys'].append({'type': key_type, 'fingerprint': fingerprint})
     return deanonymized_onion
 
 def get_stats_nb_banner(sort=True, hosts_types=[], reverse=False):
