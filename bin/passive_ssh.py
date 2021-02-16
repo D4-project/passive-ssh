@@ -253,13 +253,15 @@ def get_key_base64(key_type, fingerprint):
 #### ADVANCED ####
 def deanonymize_onion():
     fing_inter = redis_ssh.sinter('all:ip:fingerprint', 'all:onion:fingerprint')
-    deanonymized_onion = []
+    deanonymized_onion = {}
     for row_fingerprint in fing_inter:
         key_type, fingerprint = row_fingerprint.split(';')
-        fing_match = {}
-        fing_match['onion'] = get_hosts_by_fingerprint(key_type, fingerprint, host_type='onion')
-        fing_match['ip'] = get_hosts_by_fingerprint(key_type, fingerprint, host_type='ip')
-        deanonymized_onion.append(fing_match)
+        domains = get_hosts_by_fingerprint(key_type, fingerprint, host_type='onion')
+        for domain in domains:
+            if domain not in deanonymized_onion:
+                deanonymized_onion[domain] = get_host_metadata(q, banner=True, hassh=True, kex=True, pkey=True)
+            deanonymized_onion['ip'] = get_hosts_by_fingerprint(key_type, fingerprint, host_type='ip')
+            deanonymized_onion['matched_keys'] = row_fingerprint
     return deanonymized_onion
 
 def get_stats_nb_banner(sort=True, hosts_types=[], reverse=False):
@@ -295,4 +297,4 @@ def get_all_stats():
 #### ####
 
 if __name__ == '__main__':
-    deanonymize_onion()
+    print(json.dumps(deanonymize_onion()))
