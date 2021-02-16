@@ -260,7 +260,7 @@ def deanonymize_onion():
         for domain in domains:
             if domain not in deanonymized_onion:
                 deanonymized_onion[domain] = get_host_metadata(domain, banner=True, hassh=True, kex=True, pkey=True)
-            if not 'ip' in deanonymized_onion[domain]['ip']:
+            if not 'ip' in deanonymized_onion[domain]:
                 deanonymized_onion[domain]['ip'] = list(get_hosts_by_fingerprint(fingerprint, host_types=['ip']))
             else:
                 for ip_addr in get_hosts_by_fingerprint(fingerprint, host_types=['ip']):
