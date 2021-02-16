@@ -256,11 +256,11 @@ def deanonymize_onion():
     deanonymized_onion = {}
     for row_fingerprint in fing_inter:
         key_type, fingerprint = row_fingerprint.split(';')
-        domains = get_hosts_by_fingerprint(key_type, fingerprint, host_types=['onion'])
+        domains = get_hosts_by_fingerprint(fingerprint, host_types=['onion'])
         for domain in domains:
             if domain not in deanonymized_onion:
                 deanonymized_onion[domain] = get_host_metadata(q, banner=True, hassh=True, kex=True, pkey=True)
-            deanonymized_onion['ip'] = get_hosts_by_fingerprint(key_type, fingerprint, host_types=['ip'])
+            deanonymized_onion['ip'] = get_hosts_by_fingerprint(fingerprint, host_types=['ip'])
             deanonymized_onion['matched_keys'] = row_fingerprint
     return deanonymized_onion
 
