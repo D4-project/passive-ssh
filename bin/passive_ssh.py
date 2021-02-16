@@ -267,9 +267,9 @@ def deanonymize_onion():
                     if ip_addr not in deanonymized_onion[domain]['ip']:
                         deanonymized_onion[domain]['ip'].append(ip_addr)
             if not 'matched_keys' in deanonymized_onion[domain]:
-                deanonymized_onion['matched_keys'] = [{'type': key_type, 'fingerprint': fingerprint}]
+                deanonymized_onion[domain]['matched_keys'] = [{'type': key_type, 'fingerprint': fingerprint}]
             else:
-                deanonymized_onion['matched_keys'].append({'type': key_type, 'fingerprint': fingerprint})
+                deanonymized_onion[domain]['matched_keys'].append({'type': key_type, 'fingerprint': fingerprint})
     return deanonymized_onion
 
 def get_stats_nb_banner(sort=True, hosts_types=[], reverse=False):
