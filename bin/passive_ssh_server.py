@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 # -*-coding:UTF-8 -*
 
-import json
-import redis
 import ipaddress
+import json
+import re
 
 import passive_ssh
-
 
 import tornado.escape
 import tornado.ioloop
@@ -22,6 +21,20 @@ def is_valid_host(host):
     return True
     #return False
 
+def is_valid_onion_domain(domain):
+    if not domain.endswith('.onion'):
+        return False
+    domain = domain.replace('.onion', '', 1)
+    if len(domain) == 16:  # v2 address
+        r_onion = r'[a-z0-9]{16}'
+        if re.match(r_onion, domain):
+            return True
+    elif len(domain) == 56:  # v3 address
+        r_onion = r'[a-z0-9]{56}'
+        if re.match(r_onion, domain):
+            return True
+    return False
+
 # # TODO: check len
 def is_valid_fingerprint(fingerprint):
     if len(fingerprint) == 47:
@@ -36,29 +49,42 @@ def is_valid_hassh(hassh):
     else:
         return False
 
-        Get_all_stats
-
 class Get_all_stats(tornado.web.RequestHandler):
+    def set_default_headers(self):
+        self.set_header("Content-Type", 'application/json')
+
     def get(self):
         response = passive_ssh.get_all_stats()
         self.write(json.dumps(response))
 
 class Get_all_banner(tornado.web.RequestHandler):
+    def set_default_headers(self):
+        self.set_header("Content-Type", 'application/json')
+
     def get(self):
         response = {"banners": passive_ssh.get_stats_nb_banner(reverse=True)}
         self.write(json.dumps(response))
 
 class Get_all_banner_by_host(tornado.web.RequestHandler):
+    def set_default_headers(self):
+        self.set_header("Content-Type", 'application/json')
+
     def get(self, q):
         response = {"banner":q, "hosts": list(passive_ssh.get_banner_host(q))}
         self.write(json.dumps(response))
 
 class get_all_keys_types(tornado.web.RequestHandler):
+    def set_default_headers(self):
+        self.set_header("Content-Type", 'application/json')
+
     def get(self):
         response = {"keys_types": list(passive_ssh.get_all_keys_types())}
         self.write(json.dumps(response))
 
 class Get_host(tornado.web.RequestHandler):
+    def set_default_headers(self):
+        self.set_header("Content-Type", 'application/json')
+
     def get(self, q):
         if not is_valid_host(q):
             self.set_status(400)
@@ -68,6 +94,9 @@ class Get_host(tornado.web.RequestHandler):
             self.write(json.dumps(response))
 
 class Get_host_history(tornado.web.RequestHandler):
+    def set_default_headers(self):
+        self.set_header("Content-Type", 'application/json')
+
     def get(self, q):
         if not is_valid_host(q):
             self.set_status(400)
@@ -77,12 +106,18 @@ class Get_host_history(tornado.web.RequestHandler):
             self.write(json.dumps({"hosts": q, "history": response}))
 
 class Get_fingerprints_stats(tornado.web.RequestHandler):
+    def set_default_headers(self):
+        self.set_header("Content-Type", 'application/json')
+
     def get(self):
         response = passive_ssh.get_all_fingerprints(withscores=True)
         self.write(response)
         #self.write(json.dumps(response))
 
 class Get_all_host_by_fingerprint(tornado.web.RequestHandler):
+    def set_default_headers(self):
+        self.set_header("Content-Type", 'application/json')
+
     def get(self, q):
         if not is_valid_fingerprint(q):
             self.set_status(400)
@@ -95,6 +130,9 @@ class Get_all_host_by_fingerprint(tornado.web.RequestHandler):
             self.write(json.dumps(dict_resp))
 
 class Get_all_host_by_key_type_and_fingerprint(tornado.web.RequestHandler):
+    def set_default_headers(self):
+        self.set_header("Content-Type", 'application/json')
+
     def get(self, q1, q2):
         # # TODO: sanityse key_type
         if not is_valid_fingerprint(q2):
@@ -108,11 +146,17 @@ class Get_all_host_by_key_type_and_fingerprint(tornado.web.RequestHandler):
             self.write(json.dumps(dict_resp))
 
 class Get_all_hassh(tornado.web.RequestHandler):
+    def set_default_headers(self):
+        self.set_header("Content-Type", 'application/json')
+
     def get(self):
         response = passive_ssh.get_all_hasshs(withscores=True)
         self.write(json.dumps(response))
 
 class Get_hosts_by_hassh(tornado.web.RequestHandler):
+    def set_default_headers(self):
+        self.set_header("Content-Type", 'application/json')
+
     def get(self, q):
         if not is_valid_hassh(q):
             self.set_status(400)

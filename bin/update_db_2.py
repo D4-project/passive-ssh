@@ -14,5 +14,6 @@ def update_zset_all_hasshs():
         for hassh in passive_ssh.get_hasshs_by_host(host):
             redis_ssh.zincrby('all:hassh', 1, hassh)
 
+
 if __name__ == '__main__':
     update_zset_all_hasshs()

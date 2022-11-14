@@ -14,10 +14,10 @@ fi
 
 python3 -m pip install -r requirement.txt
 
+cp configs/config.cfg.sample configs/config.cfg
 
-# REDIS #
-test ! -d redis/ && git clone https://github.com/antirez/redis.git
-pushd redis/
-git checkout 5.0
-make
+# KVROCKS #
+test ! -d kvrocks/ && git clone https://github.com/apache/incubator-kvrocks.git kvrocks
+pushd kvrocks
+./x.py build
 popd

@@ -36,7 +36,7 @@ handler = logging.StreamHandler(LOG_BUFFER)
 logger.addHandler(handler)
 
 # Debug
-#paramiko.common.logging.basicConfig(level=logging.DEBUG)
+# paramiko.common.logging.basicConfig(level=logging.DEBUG)
 
 def get_log_buffer_content():
     content = LOG_BUFFER.getvalue()
@@ -49,6 +49,7 @@ def clean_log_buffer():
     LOG_BUFFER.truncate(0)
 
 ####  ####
+
 
 #### LOG PARSER ####
 regex_server = [
@@ -178,8 +179,8 @@ def get_ssh_fingerprint(target, port, socket_timeout, preferred_key=None , use_p
     # # TODO: get IP/Domain
     # # TODO: # FIXME: AD DNS
 
-    #print(ssh_transport.getpeername()[0])
-    #print(ssh_transport.getpeername()[1])
+    # print(ssh_transport.getpeername()[0])
+    # print(ssh_transport.getpeername()[1])
 
     ssh_transport.close()
     client.close()
@@ -200,10 +201,10 @@ def ssh_fingerprinter(target, port, use_proxy=False, proxy_ip="127.0.0.1", proxy
     try:
         ssh_fingerprint, host_pkey, host_ref = get_ssh_fingerprint(target, port, socket_timeout, use_proxy=use_proxy, proxy_ip=proxy_ip, proxy_port=proxy_port)
     except socket.timeout:
-        #add_error_stats(stats, 'socket_timeout')
+        # add_error_stats(stats, 'socket_timeout')
         return {}
     except OSError as e:
-        #add_error_stats(stats, e)
+        # add_error_stats(stats, e)
         print(e)
         return {}
 
@@ -237,17 +238,18 @@ def ssh_scanner(target, ssh_port, use_proxy=False, proxy_ip='127.0.0.1', proxy_p
         res_scan = ssh_fingerprinter(target, ssh_port, use_proxy=use_proxy, proxy_ip=proxy_ip, proxy_port=proxy_port, timeout=timeout)
     except ConnectionRefusedError:
         res_scan = {}
-        #add_error_stats(stats, 'ConnectionRefusedError')
+        # add_error_stats(stats, 'ConnectionRefusedError')
     except socks.GeneralProxyError as e: # Unknow Host + Socket Timeout
         print(e)
         res_scan = {}
-        #add_error_stats(stats, e)
+        # add_error_stats(stats, e)
 
     # stats
     # stats['nb_hosts_scanned'] = stats.get('nb_hosts_scanned', 0) + 1
     # if res_scan:
     #     stats['nb_ssh_hosts'] = stats.get('nb_ssh_hosts', 0) + 1
     return res_scan
+
 
 if __name__ == '__main__':
 
@@ -283,8 +285,8 @@ if __name__ == '__main__':
             sys.exit(1)
         else:
             with open (args.tflist, 'r') as f:
-                content = f.read()
-                l_targets = content.splitlines()
+                tflist = f.read()
+                l_targets = tflist.splitlines()
 
     # target to scan
     target = args.target

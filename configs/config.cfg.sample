@@ -1,0 +1,5 @@
+[Redis]
+redis_host = localhost
+redis_port = 7302
+redis_db = kvrocks
+

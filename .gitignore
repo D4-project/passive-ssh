@@ -3,6 +3,13 @@ PSSHENV/
 
 dump7301.rdb
 
+kvrocks
+DATA_KVROCKS
+
+configs/config.cfg
+
+.idea
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

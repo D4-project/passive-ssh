@@ -16,7 +16,6 @@ isserver=`screen -ls | egrep '[0-9]+.Server_PSSH' | cut -d. -f1`
 
 function helptext {
     echo -e $YELLOW"
-
     "$DEFAULT"
     This script launch:    (Inside screen Daemons)"$CYAN"
       - All Redis in memory servers.
@@ -30,26 +29,38 @@ function helptext {
 }
 
 function launching_redis {
-    conf_dir="${PSSH_HOME}/configs/"
+    conf_dir="${PSSH_HOME}/configs"
     redis_dir="${PSSH_HOME}/redis/src/"
+    redis_port=`cat $conf_dir/config.cfg | grep 'redis_port' | cut -d " " -f 3`
+    redis_db=`cat $conf_dir/config.cfg | grep 'redis_db' | cut -d " " -f 3`
+
+    echo $redis_db
 
     screen -dmS "Redis_PSSH"
     sleep 0.1
     echo -e $GREEN"\t* Launching PSSH Redis Servers"$DEFAULT
-    screen -S "Redis_PSSH" -X screen -t "7301" bash -c $redis_dir'redis-server '$conf_dir'7301.conf ; read x'
-    sleep 0.1
+    if [ "$redis_db" == "kvrocks" ]; then
+        screen -S "Redis_PSSH" -X screen -t $redis_port bash -c 'cd '${PSSH_HOME}'; ./kvrocks/build/kvrocks -c '$conf_dir/$redis_port'.conf ; read x'
+    else
+        screen -S "Redis_PSSH" -X screen -t $redis_port bash -c $redis_dir'redis-server '$conf_dir/$redis_port'.conf ; read x'
+    fi
+    sleep 0.
 }
 
 function shutting_down_redis {
+    conf_dir="${PSSH_HOME}/configs"
+    redis_port=`cat $conf_dir/config.cfg | grep 'redis_port' | cut -d " " -f 3`
     redis_dir=${PSSH_HOME}/redis/src/
-    bash -c $redis_dir'redis-cli -p 7301 SHUTDOWN'
+    bash -c $redis_dir'redis-cli -p '$redis_port' SHUTDOWN'
     sleep 0.1
 }
 
 function checking_redis {
+    conf_dir="${PSSH_HOME}/configs"
+    redis_port=`cat $conf_dir/config.cfg | grep 'redis_port' | cut -d " " -f 3`
     flag_redis=0
     redis_dir=${PSSH_HOME}/redis/src/
-    bash -c $redis_dir'redis-cli -p 7301 PING | grep "PONG" &> /dev/null'
+    bash -c $redis_dir'redis-cli -p '$redis_port' PING | grep "PONG" &> /dev/null'
     if [ ! $? == 0 ]; then
        echo -e $RED"\t6379 not ready"$DEFAULT
        flag_redis=1
@@ -63,7 +74,7 @@ function launch_redis {
     if [[ ! $isredis ]]; then
         launching_redis;
     else
-        echo -e $RED"\t* A D4_Redis screen is already launched"$DEFAULT
+        echo -e $RED"\t* A Redis_PSSH screen is already launched"$DEFAULT
     fi
 }
 
