@@ -7,12 +7,15 @@ Passive SSH is an open source framework composed of a scanner and server to stor
 The key materials along fingerprints and hosts are stored in a fast-lookup database. The system provides an historical view of SSH keys seen but also
 common key materials reused on different IP addresses.
 
+Related paper for this work: [Active and Passive Collection of SSH Key Material for Cyber Threat Intelligence](https://dl.acm.org/doi/full/10.1145/3491262).
+
 # Features
 
 - A simple SSH scanner
 - A server storing key materials in a Redis database
 - A simple ReST API to lookup by SSH fingerprints (including [hassh](https://github.com/salesforce/hassh) or host (IPv4, IPv6 or onion addresses)
 - Statistics of SSH banners and SSH fingerprints
+
 
 ## Server Requirements
 
@@ -141,3 +144,20 @@ Get hosts by [hassh](https://github.com/salesforce/hassh):
 # License
 
 The software is free software/open source released under the GNU Affero General Public License version 3.
+
+# Citation
+
+If you want to cite this work, you can cite it as follows: [Active and Passive Collection of SSH Key Material for Cyber Threat Intelligence](https://dl.acm.org/doi/full/10.1145/3491262)
+
+~~~
+@article{dulaunoy2022active,
+  title={Active and Passive Collection of SSH key material for cyber threat intelligence},
+  author={Dulaunoy, Alexandre and Huynen, Jean-Louis and Thirion, Aurelien},
+  journal={Digital Threats: Research and Practice (DTRAP)},
+  volume={3},
+  number={3},
+  pages={1--5},
+  year={2022},
+  publisher={ACM New York, NY}
+}
+~~~
