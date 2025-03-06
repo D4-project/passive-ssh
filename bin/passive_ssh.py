@@ -270,7 +270,10 @@ def get_key_metadata_by_key_type(key_type, fingerprint):
     key_metadata = {'first_seen': redis_ssh.hget(f'key_metadata:{key_type}:{fingerprint}', 'first_seen'),
                     'last_seen': redis_ssh.hget(f'key_metadata:{key_type}:{fingerprint}', 'last_seen'),
                     'base64': get_key_base64(key_type, fingerprint)}
-    key_metadata['crypto_material'] = parse_crypto_material(key_metadata['base64'])
+    if key_metadata.get('first_seen'):
+        key_metadata['crypto_material'] = parse_crypto_material(key_metadata['base64'])
+    else:
+        key_metadata['crypto_material'] = {}
     return key_metadata
 
 def get_key_base64(key_type, fingerprint):
