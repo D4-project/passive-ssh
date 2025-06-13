@@ -8,6 +8,7 @@ import os
 import redis
 from kaitaistruct import KaitaiStream
 from ssh_public_key import SshPublicKey
+import socket
 
 import configparser
 
@@ -22,6 +23,35 @@ redis_ssh = redis.StrictRedis(host=redis_host, port=redis_port, db=0, decode_res
 
 cfg = None
 # --- CONFIG --- #
+
+#### DNS ####
+
+def is_ipv4_address(host):
+    try:
+        socket.inet_aton(host)
+        return True
+    except socket.error:
+        return False
+
+def is_ipv6_address(host):
+    try:
+        socket.inet_pton(socket.AF_INET6, host)
+        return True
+    except socket.error:
+        return False
+
+def get_host_ip(host):
+    if host.endswith('.onion'): # TODO check length
+        return host
+    if is_ipv4_address(host) or is_ipv6_address(host):
+        return host
+
+    # TODO extract domain from URL
+    try:
+        host = socket.gethostbyname(host)
+    except Exception:
+        host = None
+    return host
 
 ######################################
 

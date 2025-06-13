@@ -12,14 +12,16 @@ import tornado.ioloop
 import tornado.web
 
 def is_valid_host(host):
+    host = host.lower().strip()
     try:
-        res = ipaddress.ip_address(host)
-        return True
+        res = passive_ssh.get_host_ip(host)
+        if res:
+            return True
+        else:
+            return False
     except:
         pass
-    # # TODO: check domain validity host + onion
-    return True
-    #return False
+    return False
 
 def is_valid_onion_domain(domain):
     if not domain.endswith('.onion'):
@@ -86,11 +88,12 @@ class Get_host(tornado.web.RequestHandler):
         self.set_header("Content-Type", 'application/json')
 
     def get(self, q):
-        if not is_valid_host(q):
+        host = is_valid_host(q)
+        if not host:
             self.set_status(400)
             self.finish(json.dumps({"Error": "Invalid Host"}))
         else:
-            response = passive_ssh.get_host_metadata(q, banner=True, hassh=True, kex=True, pkey=True)
+            response = passive_ssh.get_host_metadata(host, banner=True, hassh=True, kex=True, pkey=True)
             if response:
                 self.write(json.dumps(response))
             else:
@@ -102,13 +105,14 @@ class Get_host_history(tornado.web.RequestHandler):
         self.set_header("Content-Type", 'application/json')
 
     def get(self, q):
-        if not is_valid_host(q):
+        host = is_valid_host(q)
+        if not host:
             self.set_status(400)
             self.finish(json.dumps({"Error": "Invalid Host"}))
         else:
-            response = passive_ssh.get_host_history(q, get_key=True)
+            response = passive_ssh.get_host_history(host, get_key=True)
             if response:
-                self.write(json.dumps({"hosts": q, "history": response}))
+                self.write(json.dumps({"hosts": host, "history": response}))
             else:
                 self.set_status(404)
                 self.finish(json.dumps({"Error": "Unknown Host"}))
