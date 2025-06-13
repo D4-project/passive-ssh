@@ -166,10 +166,17 @@ class Get_hosts_by_hassh(tornado.web.RequestHandler):
             kex = passive_ssh.get_hassh_kex(q, r_format='dict')
             self.write(json.dumps({"hassh": q, "hosts": response, "kexs": kex}))
 
+class Ping(tornado.web.RequestHandler):
+    def set_default_headers(self):
+        self.set_header("Content-Type", 'application/json')
+
+    def get(self):
+        self.write(json.dumps({"ping": "pong"}))
 
 #### TORNADO ####
 
 application = tornado.web.Application([
+    (r"/ping", Ping),
     (r"/stats", Get_all_stats),
 
     (r"/banners",Get_all_banner),
