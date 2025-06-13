@@ -88,7 +88,7 @@ class Get_host(tornado.web.RequestHandler):
         self.set_header("Content-Type", 'application/json')
 
     def get(self, q):
-        host = is_valid_host(q)
+        host = passive_ssh.get_host_ip(q)
         if not host:
             self.set_status(400)
             self.finish(json.dumps({"Error": "Invalid Host"}))
@@ -105,7 +105,7 @@ class Get_host_history(tornado.web.RequestHandler):
         self.set_header("Content-Type", 'application/json')
 
     def get(self, q):
-        host = is_valid_host(q)
+        host = passive_ssh.get_host_ip(q)
         if not host:
             self.set_status(400)
             self.finish(json.dumps({"Error": "Invalid Host"}))

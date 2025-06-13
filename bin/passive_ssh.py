@@ -41,6 +41,7 @@ def is_ipv6_address(host):
         return False
 
 def get_host_ip(host):
+    host = host.lower().strip()
     if host.endswith('.onion'): # TODO check length
         return host
     if is_ipv4_address(host) or is_ipv6_address(host):
