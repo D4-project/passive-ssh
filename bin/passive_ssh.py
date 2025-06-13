@@ -86,6 +86,15 @@ def get_all_ip():
 def get_all_hosts_by_type(host_type):
     return redis_ssh.smembers(f'all:{host_type}')
 
+def exists_host(host_type, host):
+    return redis_ssh.exists(f'{host_type}_metadata:{host}')
+
+def exists_host_onion(host):
+    return redis_ssh.sismember('all:onion', host)
+
+def exists_host_ip(host):
+    return redis_ssh.sismember('all:ip', host)
+
 #### BANNER ####
 def get_all_banner():
     return redis_ssh.smembers('all:banner')
@@ -187,6 +196,11 @@ def get_host_history(host, host_type=None, date_from=None, date_to=None, get_key
     # date_from, date_to = sanitize_date()
     if not host_type:
         host_type = get_host_type(host)
+    if not exists_host(host_type, host):
+        if host_type == 'onion':
+            add_unknown_onion(host)
+        return {}
+
     ssh_history = redis_ssh.zrange(f'fingerprint:history:{host_type}:{host}', 0, -1, withscores=True)
     if not get_key:
         return ssh_history
@@ -207,7 +221,7 @@ def get_host_ports(host, host_type):
     host_ports = redis_ssh.smembers(f'{host_type}:port:{host}')
     if not host_ports:
         host_ports = [22]
-    return host_ports
+    return list(host_ports)
 
 def get_host_first_seen(host, host_type):
     return redis_ssh.hget(f'{host_type}_metadata:{host}', 'first_seen')
@@ -220,12 +234,15 @@ def get_host_last_seen(host, host_type):
 def get_host_metadata(host, host_type=None, banner=False, hassh=False, kex=False, pkey=False):
     if not host_type:
         host_type = get_host_type(host)
+
+    if not exists_host(host_type, host):
+        if host_type == 'onion':
+            add_unknown_onion(host)
+        return {}
+
     host_metadata = {'first_seen': get_host_first_seen(host, host_type),
-                     'last_seen': get_host_last_seen(host, host_type)}
-    port = redis_ssh.hget(f'{host_type}_metadata:{host}', 'port')
-    if not port:
-        port = 22
-    host_metadata['port'] = port
+                     'last_seen': get_host_last_seen(host, host_type),
+                     'ports': get_host_ports(host, host_type)}
     if banner:
         host_metadata['banner'] = get_banner_by_host(host, host_type=host_type, r_list=True)
     if hassh:
@@ -240,9 +257,6 @@ def get_host_metadata(host, host_type=None, banner=False, hassh=False, kex=False
         key_type, fingerprint = ssh_key.split(';', 1)
         host_metadata['keys'].append({'type': key_type, 'fingerprint': fingerprint})
     return host_metadata
-
-def exists_host(host_type, host):
-    return redis_ssh.exists(f'{host_type}_metadata:{host}')
 
 def exist_ssh_key(key_type, fingerprint):
     return redis_ssh.exists(f'key_metadata:{key_type}:{fingerprint}')
@@ -374,6 +388,23 @@ def deanonymize_onion():
             else:
                 deanonymized_onion[domain]['matched_keys'].append({'type': key_type, 'fingerprint': fingerprint})
     return deanonymized_onion
+
+def get_onions_scanned():
+    return redis_ssh.smembers('onion:scanned')
+
+def is_onion_scanned(onion):
+    return redis_ssh.sismember('onion:scanned', onion)
+
+def add_onion_scanned(onion):
+    redis_ssh.sadd('onion:scanned', onion)
+
+def get_unknown_onions():
+    return redis_ssh.smembers('onion:unknown')
+
+def add_unknown_onion(onion):
+    if not is_onion_scanned(onion):
+        redis_ssh.sadd('onion:unknown', onion)
+
 
 # TODO
 def get_stats_nb_banner(sort=True, hosts_types=[], reverse=False):

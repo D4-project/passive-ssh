@@ -18,6 +18,7 @@ import netaddr
 from hashlib import md5
 
 import passive_ingester
+import passive_ssh
 
 
 #### SSH BANNER ####
@@ -250,6 +251,10 @@ def ssh_scanner(target, ssh_port, use_proxy=False, proxy_ip='127.0.0.1', proxy_p
     #     stats['nb_ssh_hosts'] = stats.get('nb_ssh_hosts', 0) + 1
     return res_scan
 
+def scan_unknown_onion():
+    for onion in passive_ssh.get_unknown_onions():
+        ssh_scanner(onion, 22, use_proxy=True)
+        passive_ssh.add_onion_scanned(onion)
 
 if __name__ == '__main__':
 
