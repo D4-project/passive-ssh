@@ -91,7 +91,11 @@ class Get_host(tornado.web.RequestHandler):
             self.finish(json.dumps({"Error": "Invalid Host"}))
         else:
             response = passive_ssh.get_host_metadata(q, banner=True, hassh=True, kex=True, pkey=True)
-            self.write(json.dumps(response))
+            if response:
+                self.write(json.dumps(response))
+            else:
+                self.set_status(404)
+                self.finish(json.dumps({"Error": "Unknown Host"}))
 
 class Get_host_history(tornado.web.RequestHandler):
     def set_default_headers(self):
@@ -103,7 +107,11 @@ class Get_host_history(tornado.web.RequestHandler):
             self.finish(json.dumps({"Error": "Invalid Host"}))
         else:
             response = passive_ssh.get_host_history(q, get_key=True)
-            self.write(json.dumps({"hosts": q, "history": response}))
+            if response:
+                self.write(json.dumps({"hosts": q, "history": response}))
+            else:
+                self.set_status(404)
+                self.finish(json.dumps({"Error": "Unknown Host"}))
 
 class Get_fingerprints_stats(tornado.web.RequestHandler):
     def set_default_headers(self):
@@ -124,10 +132,14 @@ class Get_all_host_by_fingerprint(tornado.web.RequestHandler):
             self.finish(json.dumps({"Error": "Invalid Fingerprint"}))
         else:
             response = list(passive_ssh.get_hosts_by_fingerprint(q))
-            dict_resp = passive_ssh.get_key_metadata(q)
-            dict_resp['fingerprint'] = q
-            dict_resp['hosts'] = response
-            self.write(json.dumps(dict_resp))
+            if response:
+                dict_resp = passive_ssh.get_key_metadata(q)
+                dict_resp['fingerprint'] = q
+                dict_resp['hosts'] = response
+                self.write(json.dumps(dict_resp))
+            else:
+                self.set_status(404)
+                self.finish(json.dumps({"Error": "Unknown Fingerprint"}))
 
 class Get_all_host_by_key_type_and_fingerprint(tornado.web.RequestHandler):
     def set_default_headers(self):
@@ -140,10 +152,14 @@ class Get_all_host_by_key_type_and_fingerprint(tornado.web.RequestHandler):
             self.finish(json.dumps({"Error": "Invalid Fingerprint"}))
         else:
             response = list(passive_ssh.get_hosts_by_key_type_and_fingerprint(q1, q2))
-            dict_resp = passive_ssh.get_key_metadata_by_key_type(q1, q2)
-            dict_resp['type'] = q1
-            dict_resp['hosts'] = response
-            self.write(json.dumps(dict_resp))
+            if response:
+                dict_resp = passive_ssh.get_key_metadata_by_key_type(q1, q2)
+                dict_resp['type'] = q1
+                dict_resp['hosts'] = response
+                self.write(json.dumps(dict_resp))
+            else:
+                self.set_status(404)
+                self.finish(json.dumps({"Error": "Unknown Fingerprint"}))
 
 class Get_all_hassh(tornado.web.RequestHandler):
     def set_default_headers(self):
@@ -163,8 +179,12 @@ class Get_hosts_by_hassh(tornado.web.RequestHandler):
             self.finish(json.dumps({"Error": "Invalid Hassh"}))
         else:
             response = list(passive_ssh.get_hosts_by_hassh(q))
-            kex = passive_ssh.get_hassh_kex(q, r_format='dict')
-            self.write(json.dumps({"hassh": q, "hosts": response, "kexs": kex}))
+            if response:
+                kex = passive_ssh.get_hassh_kex(q, r_format='dict')
+                self.write(json.dumps({"hassh": q, "hosts": response, "kexs": kex}))
+            else:
+                self.set_status(404)
+                self.finish(json.dumps({"Error": "Unknown Hassh"}))
 
 class Ping(tornado.web.RequestHandler):
     def set_default_headers(self):
