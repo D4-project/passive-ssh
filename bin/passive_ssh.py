@@ -121,10 +121,16 @@ def exists_host(host_type, host):
     return redis_ssh.exists(f'{host_type}_metadata:{host}')
 
 def exists_host_onion(host):
-    return redis_ssh.sismember('all:onion', host)
+    try:
+        return redis_ssh.sismember('all:onion', host)
+    except redis.exceptions.ResponseError:
+        return False
 
 def exists_host_ip(host):
-    return redis_ssh.sismember('all:ip', host)
+    try:
+        return redis_ssh.sismember('all:ip', host)
+    except redis.exceptions.ResponseError:
+        return False
 
 #### BANNER ####
 def get_all_banner():
@@ -424,7 +430,10 @@ def get_onions_scanned():
     return redis_ssh.smembers('onion:scanned')
 
 def is_onion_scanned(onion):
-    return redis_ssh.sismember('onion:scanned', onion)
+    try:
+        return redis_ssh.sismember('onion:scanned', onion)
+    except redis.exceptions.ResponseError:
+        return False
 
 def add_onion_scanned(onion):
     redis_ssh.sadd('onion:scanned', onion)
