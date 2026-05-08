@@ -110,7 +110,7 @@ def get_socket_timeout(domain, use_proxy=False, timeout=0):
         return 1
 
 def add_error_stats(stats_dict, error_name):
-    if not 'errors' in stats_dict:
+    if 'errors' not in stats_dict:
         stats_dict['errors'] = {}
     error_name = str(error_name).replace('()', '')
     stats_dict['errors'][error_name] = stats_dict['errors'].get(error_name, 0) + 1
@@ -169,13 +169,14 @@ def get_ssh_fingerprint(target, port, socket_timeout, preferred_key=None , use_p
         key = ssh_transport.get_remote_server_key()
         fingerprint = binascii.hexlify(key.get_fingerprint()).decode()
     except paramiko.ssh_exception.SSHException as e:
-        print('SSH EXCEPTION: {}:{} - {}, {}'.format(target, port, preferred_key, e))
+        print(f'SSH EXCEPTION: {target}:{port} - {preferred_key}, {e}')
         return {}
 
-    host_pkey = {}
-    host_pkey['fingerprint'] = ':'.join(fingerprint[i:i+2] for i in range(0, len(fingerprint), 2))
-    host_pkey['name'] = key.get_name()
-    host_pkey['base64'] = '{} {}'.format(host_pkey['name'], key.get_base64())
+    host_pkey = {
+        'fingerprint': ':'.join(fingerprint[i:i+2] for i in range(0, len(fingerprint), 2)),
+        'name': key.get_name(),
+    }
+    host_pkey['base64'] = f"{host_pkey['name']} {key.get_base64()}"
 
     # # TODO: get IP/Domain
     # # TODO: # FIXME: AD DNS
@@ -191,9 +192,8 @@ def get_ssh_fingerprint(target, port, socket_timeout, preferred_key=None , use_p
 
     if preferred_key:
         return host_pkey
-
     else:
-        return (dict_key_exchange, host_pkey, host_ref)
+        return dict_key_exchange, host_pkey, host_ref
 
 
 def ssh_fingerprinter(target, port, use_proxy=False, proxy_ip="127.0.0.1", proxy_port=9050, timeout=0):
@@ -256,26 +256,32 @@ def scan_unknown_onion():
         ssh_scanner(onion, 22, use_proxy=True)
         passive_ssh.add_onion_scanned(onion)
 
+
 if __name__ == '__main__':
 
     ds = time.time()
 
     parser = argparse.ArgumentParser(description='SSH Scanner')
-    parser.add_argument('-p', '--port',help='SSH port' , type=int, default=22, dest='ssh_port')
+    parser.add_argument('-p', '--port', help='SSH port', type=int, default=22, dest='ssh_port')
     parser.add_argument('--proxy', help='SSH port', action="store_true")
     parser.add_argument('-v', '--verbose', help='Verbose output', action="store_true", default=False)
-    parser.add_argument('--timeout',help='timeout' , type=int, default=0, dest='in_timeout')
-    parser.add_argument('-i', '--proxy_ip',help='proxy ip' , type=str, default='127.0.0.1', dest='proxy_ip')
-    parser.add_argument('-pp', '--proxy_port',help='proxy port' , type=int, default=9050, dest='proxy_port')
+    parser.add_argument('--timeout', help='timeout', type=int, default=0, dest='in_timeout')
+    parser.add_argument('-i', '--proxy_ip', help='proxy ip', type=str, default='127.0.0.1', dest='proxy_ip')
+    parser.add_argument('-pp', '--proxy_port', help='proxy port', type=int, default=9050, dest='proxy_port')
     parser.add_argument('-r', '--trange', help='target network range express in CIDR block', type=str, dest='trange', required=False, default=None)
     parser.add_argument('-f', '--file', help='Scan all targets from the given file', type=str, dest='tflist', required=False, default=None)
 
     # Required argument
     requiredNamed = parser.add_argument_group('required arguments')
-    requiredNamed.add_argument('-t', '--target',help='target domain or ip' , type=str, dest='target', required=False, default=None)
+    requiredNamed.add_argument('-t', '--target', help='target domain or ip', type=str, dest='target', required=False, default=None)
+    parser.add_argument('--queue', help='Scan next target from the Redis scanner queue', action='store_true', default=False, dest='scan_queue')
     args = parser.parse_args()
 
-    if args.target is None and args.trange is None and args.tflist is None:
+    if args.scan_queue and args.target is not None:
+        print('Error: --queue and --target cannot be used together', file=sys.stderr, flush=True)
+        sys.exit(1)
+
+    if args.target is None and args.trange is None and args.tflist is None and not args.scan_queue:
         parser.print_help()
         sys.exit(0)
 
@@ -289,7 +295,7 @@ if __name__ == '__main__':
             print(f'Error: File not found {args.tflist}', file=sys.stderr, flush=True)
             sys.exit(1)
         else:
-            with open (args.tflist, 'r') as f:
+            with open(args.tflist, 'r') as f:
                 tflist = f.read()
                 l_targets = tflist.splitlines()
 
@@ -303,9 +309,25 @@ if __name__ == '__main__':
     proxy_port = args.proxy_port
     in_timeout = args.in_timeout
 
-    if args.verbose:
-        print(target)
-    if args.target:
+    if args.scan_queue:
+        while True:
+            target = passive_ssh.get_next_scan_target()
+            if target is None:
+                break
+            print(target)
+            try:
+                res_scan = ssh_scanner(target, ssh_port, use_proxy=use_proxy, proxy_ip=proxy_ip, proxy_port=proxy_port, timeout=in_timeout)
+            except Exception as e:
+                print(e)
+                continue
+            if res_scan:
+                print(json.dumps(res_scan))
+                passive_ingester.save_ssh_scan(res_scan)
+        if args.verbose:
+            print('Scanner queue is empty', file=sys.stderr, flush=True)
+    elif target:
+        if args.verbose:
+            print(target)
         res_scan = ssh_scanner(target, ssh_port, use_proxy=use_proxy, proxy_ip=proxy_ip, proxy_port=proxy_port, timeout=in_timeout)
         print(json.dumps(res_scan))
         if res_scan:
@@ -314,12 +336,13 @@ if __name__ == '__main__':
         for v in trange:
             try:
                 res_scan = ssh_scanner(str(v), ssh_port, use_proxy=use_proxy, proxy_ip=proxy_ip, proxy_port=proxy_port, timeout=in_timeout)
-            except:
+            except Exception as e:
+                print(e)
                 continue
             if args.verbose:
-                print("Scanning {}...".format(str(v)))
-            print(json.dumps(res_scan))
+                print(f"Scanning {str(v)}...")
             if res_scan:
+                print(json.dumps(res_scan))
                 passive_ingester.save_ssh_scan(res_scan)
     if l_targets:
         for target in l_targets:
@@ -329,8 +352,8 @@ if __name__ == '__main__':
             except Exception as e:
                 print(e)
                 continue
-            print(json.dumps(res_scan))
             if res_scan:
+                print(json.dumps(res_scan))
                 passive_ingester.save_ssh_scan(res_scan)
 
     print(time.time()-ds)

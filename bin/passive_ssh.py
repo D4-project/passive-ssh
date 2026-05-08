@@ -21,6 +21,31 @@ redis_host = cfg.get('Redis', 'redis_host')
 redis_port = cfg.getint('Redis', 'redis_port')
 redis_ssh = redis.StrictRedis(host=redis_host, port=redis_port, db=0, decode_responses=True)
 
+SCAN_QUEUE_MIN_PRIORITY = 0
+SCAN_QUEUE_MAX_PRIORITY = 100
+
+def _normalize_scan_priority(priority):
+    try:
+        priority = int(priority)
+    except (TypeError, ValueError):
+        priority = SCAN_QUEUE_MAX_PRIORITY
+    return max(SCAN_QUEUE_MIN_PRIORITY, min(SCAN_QUEUE_MAX_PRIORITY, priority))
+
+def add_target_to_queue(target, priority=SCAN_QUEUE_MAX_PRIORITY):
+    target = str(target).strip()
+    if not target:
+        return False
+    prio = _normalize_scan_priority(priority) # TODO MOVE ME TO API FUNCTION
+    redis_ssh.zadd('scanner:queue', {target: prio})
+    return True
+
+def get_next_scan_target():
+    next_target = redis_ssh.zpopmin('scanner:queue', count=1)
+    if not next_target:
+        return None
+    return next_target[0][0]
+
+
 cfg = None
 # --- CONFIG --- #
 
