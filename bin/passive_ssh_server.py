@@ -3,13 +3,42 @@
 
 import ipaddress
 import json
+import os
 import re
-
-import passive_ssh
+import sys
+import configparser
 
 import tornado.escape
 import tornado.ioloop
 import tornado.web
+
+sys.path.append(os.environ['PSSH_HOME'])
+##################################
+# Import Project packages
+##################################
+from bin import passive_ssh
+
+
+def is_valid_ip(value):
+    try:
+        ipaddress.ip_address(value)
+        return True
+    except ValueError:
+        return False
+
+def normalize_ip(value):
+    value = value.strip()
+    if value.startswith("[") and value.endswith("]"):
+        value = value[1:-1]
+    try:
+        ip = ipaddress.ip_address(value)
+        # Optional: normalize IPv4-mapped IPv6 to plain IPv4
+        # ::ffff:192.168.1.1 -> 192.168.1.1
+        if isinstance(ip, ipaddress.IPv6Address) and ip.ipv4_mapped:
+            return str(ip.ipv4_mapped)
+        return str(ip)
+    except ValueError:
+        return None
 
 def is_valid_host(host):
     host = host.lower().strip()
@@ -37,7 +66,6 @@ def is_valid_onion_domain(domain):
             return True
     return False
 
-# # TODO: check len
 def is_valid_fingerprint(fingerprint):
     if len(fingerprint) == 47:
         return True
@@ -51,7 +79,34 @@ def is_valid_hassh(hassh):
     else:
         return False
 
-class Get_all_stats(tornado.web.RequestHandler):
+
+config_dir = os.path.join(os.environ['PSSH_HOME'], 'configs')
+cfg = configparser.ConfigParser()
+cfg.read(os.path.join(config_dir, 'config.cfg'))
+API_KEY = passive_ssh.get_api_key()
+
+
+def is_valid_api_key(raw_auth_header):
+    if not API_KEY or not raw_auth_header:
+        return False
+    raw_auth_header = raw_auth_header.strip()
+    if raw_auth_header.lower().startswith('bearer '):
+        provided_key = raw_auth_header.split(' ', 1)[1].strip()
+    else:
+        provided_key = raw_auth_header
+    return provided_key == API_KEY
+
+
+class ApiKeyProtectedHandler(tornado.web.RequestHandler):
+    def prepare(self):
+        if is_valid_api_key(self.request.headers.get('Authorization')):
+            return
+
+        self.set_status(403)
+        self.finish(json.dumps({'Error': 'Forbidden'}))
+
+class Get_all_stats(ApiKeyProtectedHandler):
+
     def set_default_headers(self):
         self.set_header("Content-Type", 'application/json')
 
@@ -190,6 +245,48 @@ class Get_hosts_by_hassh(tornado.web.RequestHandler):
                 self.set_status(404)
                 self.finish(json.dumps({"Error": "Unknown Hassh"}))
 
+
+class Add_target(ApiKeyProtectedHandler):
+
+    def set_default_headers(self):
+        self.set_header("Content-Type", 'application/json')
+
+    def post(self):
+        try:
+            payload = json.loads(self.request.body.decode('utf-8')) if self.request.body else {}
+        except (TypeError, ValueError):
+            self.set_status(400)
+            self.finish(json.dumps({"Error": "Invalid JSON body"}))
+            return
+
+        target = payload.get('target', '')
+        target = target.strip()
+        priority = payload.get('priority', 50)
+
+        if not target:
+            self.set_status(400)
+            self.finish(json.dumps({"Error": "Missing target"}))
+            return
+
+        normalized_ip = normalize_ip(target)
+        if normalized_ip:
+            target = normalized_ip
+        elif is_valid_host(target):
+            target = target.lower()
+        elif is_valid_onion_domain(target):
+            target = target.lower()
+        else:
+            self.set_status(400)
+            self.finish(json.dumps({"Error": "Invalid target"}))
+            return
+
+        if passive_ssh.api_add_target_to_queue(target, priority=priority):
+            self.write(json.dumps({"status": "queued", "target": str(target).strip()}))
+            return
+
+        self.set_status(500)
+        self.finish(json.dumps({"Error": "Unable to queue target"}))
+
 class Ping(tornado.web.RequestHandler):
     def set_default_headers(self):
         self.set_header("Content-Type", 'application/json')
@@ -201,7 +298,9 @@ class Ping(tornado.web.RequestHandler):
 
 application = tornado.web.Application([
     (r"/ping", Ping),
+
     (r"/stats", Get_all_stats),
+    (r"/target/add", Add_target),
 
     (r"/banners",Get_all_banner),
     (r"/banner/hosts/(.*)",Get_all_banner_by_host),
@@ -219,6 +318,7 @@ application = tornado.web.Application([
     (r"/hassh/hosts/(.*)", Get_hosts_by_hassh),
 
 ])
+
 
 if __name__ == '__main__':
     application.listen(8500)

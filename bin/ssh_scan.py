@@ -236,20 +236,20 @@ def ssh_scanner(target, ssh_port, use_proxy=False, proxy_ip='127.0.0.1', proxy_p
         target = target.lower()
         use_proxy = True
     try:
-        res_scan = ssh_fingerprinter(target, ssh_port, use_proxy=use_proxy, proxy_ip=proxy_ip, proxy_port=proxy_port, timeout=timeout)
+        r_scan = ssh_fingerprinter(target, ssh_port, use_proxy=use_proxy, proxy_ip=proxy_ip, proxy_port=proxy_port, timeout=timeout)
     except ConnectionRefusedError:
-        res_scan = {}
+        r_scan = {}
         # add_error_stats(stats, 'ConnectionRefusedError')
     except socks.GeneralProxyError as e: # Unknow Host + Socket Timeout
         print(e)
-        res_scan = {}
+        r_scan = {}
         # add_error_stats(stats, e)
 
     # stats
     # stats['nb_hosts_scanned'] = stats.get('nb_hosts_scanned', 0) + 1
     # if res_scan:
     #     stats['nb_ssh_hosts'] = stats.get('nb_ssh_hosts', 0) + 1
-    return res_scan
+    return r_scan
 
 def scan_unknown_onion():
     for onion in passive_ssh.get_unknown_onions():
@@ -285,11 +285,10 @@ if __name__ == '__main__':
         parser.print_help()
         sys.exit(0)
 
-    trange = []
     if args.trange:
-        trange = netaddr.IPNetwork(args.trange)
+        for target in netaddr.IPNetwork(args.trange):
+            passive_ssh.add_target_to_queue(target, random_prio=True)
 
-    l_targets = []
     if args.tflist:
         if not os.path.isfile(args.tflist):
             print(f'Error: File not found {args.tflist}', file=sys.stderr, flush=True)
@@ -297,7 +296,8 @@ if __name__ == '__main__':
         else:
             with open(args.tflist, 'r') as f:
                 tflist = f.read()
-                l_targets = tflist.splitlines()
+                for target in tflist.splitlines():
+                    passive_ssh.add_target_to_queue(target, random_prio=True)
 
     # target to scan
     target = args.target
@@ -311,20 +311,21 @@ if __name__ == '__main__':
 
     if args.scan_queue:
         while True:
-            target = passive_ssh.get_next_scan_target()
+            target = str(passive_ssh.get_next_scan_target())
             if target is None:
-                break
-            print(target)
+                time.sleep(60)
+                print('Scanner queue is empty')
+            print(f"Scanning {str(target)}...")
             try:
                 res_scan = ssh_scanner(target, ssh_port, use_proxy=use_proxy, proxy_ip=proxy_ip, proxy_port=proxy_port, timeout=in_timeout)
             except Exception as e:
-                print(e)
+                print(e)  # TODO LOG
                 continue
             if res_scan:
                 print(json.dumps(res_scan))
                 passive_ingester.save_ssh_scan(res_scan)
         if args.verbose:
-            print('Scanner queue is empty', file=sys.stderr, flush=True)
+            print('Scanner queue is empty')
     elif target:
         if args.verbose:
             print(target)
@@ -332,28 +333,4 @@ if __name__ == '__main__':
         print(json.dumps(res_scan))
         if res_scan:
             passive_ingester.save_ssh_scan(res_scan)
-    if trange:
-        for v in trange:
-            try:
-                res_scan = ssh_scanner(str(v), ssh_port, use_proxy=use_proxy, proxy_ip=proxy_ip, proxy_port=proxy_port, timeout=in_timeout)
-            except Exception as e:
-                print(e)
-                continue
-            if args.verbose:
-                print(f"Scanning {str(v)}...")
-            if res_scan:
-                print(json.dumps(res_scan))
-                passive_ingester.save_ssh_scan(res_scan)
-    if l_targets:
-        for target in l_targets:
-            try:
-                print(target)
-                res_scan = ssh_scanner(str(target), ssh_port, use_proxy=use_proxy, proxy_ip=proxy_ip, proxy_port=proxy_port, timeout=in_timeout)
-            except Exception as e:
-                print(e)
-                continue
-            if res_scan:
-                print(json.dumps(res_scan))
-                passive_ingester.save_ssh_scan(res_scan)
-
-    print(time.time()-ds)
+        print(time.time() - ds)

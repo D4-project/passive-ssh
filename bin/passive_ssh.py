@@ -5,7 +5,10 @@ import base64
 import io
 import json
 import os
+import random
 import redis
+import secrets
+import string
 from kaitaistruct import KaitaiStream
 from ssh_public_key import SshPublicKey
 import socket
@@ -13,16 +16,40 @@ import socket
 import configparser
 
 #### CONFIG ####
-config_dir = os.path.join(os.environ['PSSH_HOME'], 'configs')
+config_dir = os.path.join(os.environ["PSSH_HOME"], "configs")
+config_path = os.path.join(config_dir, "config.cfg")
+
 cfg = configparser.ConfigParser()
-cfg.read(os.path.join(config_dir, os.path.join(config_dir, 'config.cfg')))
+cfg.read(config_path)
 
 redis_host = cfg.get('Redis', 'redis_host')
 redis_port = cfg.getint('Redis', 'redis_port')
 redis_ssh = redis.StrictRedis(host=redis_host, port=redis_port, db=0, decode_responses=True)
 
+#### API KEY ####
+
+def generate_api_key():
+    charset = string.ascii_letters + string.digits + '_'
+    api_key = ''.join(secrets.choice(charset) for _ in range(55))
+    if not cfg.has_section("API"):
+        cfg.add_section("API")
+    cfg.set("API", "api_key", api_key)
+    with open(config_path, "w") as f:
+        cfg.write(f)
+    return api_key
+
+def get_api_key():
+    if not cfg.has_section("API") or not cfg.has_option("API", "api_key"):
+        return generate_api_key()
+    return cfg.get("API", "api_key")
+
+#### QUEUE ####
+
 SCAN_QUEUE_MIN_PRIORITY = 0
 SCAN_QUEUE_MAX_PRIORITY = 100
+
+def randomise_priority():
+    return random.randint(50, 90)
 
 def _normalize_scan_priority(priority):
     try:
@@ -31,13 +58,18 @@ def _normalize_scan_priority(priority):
         priority = SCAN_QUEUE_MAX_PRIORITY
     return max(SCAN_QUEUE_MIN_PRIORITY, min(SCAN_QUEUE_MAX_PRIORITY, priority))
 
-def add_target_to_queue(target, priority=SCAN_QUEUE_MAX_PRIORITY):
+def add_target_to_queue(target, priority=SCAN_QUEUE_MAX_PRIORITY, random_prio=False):
     target = str(target).strip()
     if not target:
         return False
-    prio = _normalize_scan_priority(priority) # TODO MOVE ME TO API FUNCTION
-    redis_ssh.zadd('scanner:queue', {target: prio})
+    if random_prio:
+        priority = randomise_priority()
+    redis_ssh.zadd('scanner:queue', {target: priority})
     return True
+
+def api_add_target_to_queue(target, priority=SCAN_QUEUE_MAX_PRIORITY):
+    prio = _normalize_scan_priority(priority)
+    return add_target_to_queue(target, priority=prio)
 
 def get_next_scan_target():
     next_target = redis_ssh.zpopmin('scanner:queue', count=1)
@@ -45,8 +77,6 @@ def get_next_scan_target():
         return None
     return next_target[0][0]
 
-
-cfg = None
 # --- CONFIG --- #
 
 #### DNS ####
